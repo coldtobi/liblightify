@@ -1,0 +1,9 @@
+TODO List (patches welcome)
+
+ * Improve documentation (Doxygen style docs)
+ * Manpage for the utility
+ * Group Control
+ * Sniffing managment functions (rename, groups ..)
+ * C++ Wrapper
+ * Pythong Bindings
+ * PHP Bindings...

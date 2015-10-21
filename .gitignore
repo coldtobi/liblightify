@@ -1,0 +1,14 @@
+Makefile
+Makefile.in
+aclocal.m4
+build-aux/
+config.h
+config.log
+config.status
+configure
+libtool
+m4/
+src/.deps/
+src/tests/.deps/
+src/tools/.deps/
+autom4te.cache/

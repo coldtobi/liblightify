@@ -1,0 +1,261 @@
+GW PROTOCOL:
+============
+
+The protocol has been reverse enginerring, so expect errors or at least inaccuracies.
+
+A big help were the following resources. MANY kudos to them:
+
+Python module:
+https://github.com/mikma/python-lightify/blob/master/lightify.py
+https://github.com/timoly/houmio-driver-osram-lightify/blob/master/src/driver.js
+and http://sarajarvi.org/lightify-haltuun/ (and goolge translate for the last link...)
+... and wireshark
+
+Numbers are LSB-First. (Little-Endian)
+
+Protocol Header -- this is both on queries and answers.
+================
+
+Total 8 bytes.
+
+[size(2) flags command session-id(4)]
+
+[size]
+size in bytes (confirmed to be two bytes when 0x13 returned >255 bytes)
+note: its always 2 less than the actual size. so it seems that it does not include itself.
+
+[flags]
+ some flags seen:
+   (some guessing included) Values 0,1,2,3 seen so far.
+   Bit 0 -> set if the nodes answers
+   Bit 1 -> seems 1 if adressing a zone, 0 if a node.
+
+[cmd] The command.
+   Known 0x13, 0x1e, 0x26, 0x31, 0x32, 0x33, 0x36, 0x68 (from the python one)
+   (there are for sure other commands too.)
+
+[session-id] seems to be all the 4 bytes. Will be echoed back in the answer.
+   Seems not to be linear, it works also if you use /dev/random)
+
+
+Commands dissected
+==================
+
+The answer seems *always* to start with a status byte. Probably also on 0x13.
+0 seems success, 0x15 seems "node not found".
+
+Addressing seems to be either MAC (lamp) or Group/Zone (see python lib)
+
+########################
+0x13 -- scan for lamps.
+########################
+
+Extra byte after header. When 1 answer is below.
+Otherwise it looks like a 2-byte value and the name. the 2-byte value matches the (guessed) Adr field.
+Value 1 seems to deliver more complete informations, other values not tested.
+
+Answer:
+[????  ] -1b- unknown. (always 0)
+[num]    -1b- number of nodes.
+[0]      -1b- always zero
+
+Then a repeating block starts
+[Adr]   -2b- seems the ZigBee 16bit adressing -- if the node is offline its 0xffff.
+[MAC]   -8b- ZigBee uses a 64 bit MAC -- seems that this is it.
+[type]  -1b- ZLL lamptype? My lamps report as this (mapping to ZLL types)
+             0  -- (0010) On/Off Plug                only 0/1
+             2  -- (0220) Colour Temperature Light   CCT, dim
+             4  -- (0100) Dimable Light              dim
+             8  -- (0210) Color Light                RGB, dim
+             10 -- Extended Color Light              RGB, CCT, dim
+                   Value seems to be bit-coded: 10 = 8+2 -> CCT + RGB; Plug is odd.
+                   unmapped are: On/Off Light(0000) and Dimmable Plug Unit (0110).
+[unkn]  -4b- unknown 4 bytes. Software version? the numbers would match.
+             (recently updated to 1.2.3.14 -> data is 0x1 0x2 0x3 0x14.
+[onlne] -1b- online(=2) /offline(=0) .. other values never seen.
+[grp]   -2b- 0 if lamp is not part of a group, otherwise which group -- bitcoded !!?!
+[oo]    -1b- 0 is lamp is off, 1 if on.
+[dim]   -1b- brightness from 0-100
+[cct]   -2b- in K
+[r]     -1b- color component RED
+[g]     -1b- color component GREEN (or greenish...)
+[b]     -1b- color component BLUE
+[w]     -1b- color component WHITE
+              white is strange again.. only accepted if the other colors are 0 and on real RGBW ones
+              all colors are going on except white. ???
+[name]  -until end- null-terminated string representing the name. max 15 bytes
+(so we get 42 bytes total)
+
+###########################
+0x31 -- Diming to a Level #
+###########################
+Query:
+MAC-Adress (8bytes),
+Dim-Level (0-100),
+Time (0-65535) Unit is ~1/10sec
+
+Answr:
+[status]    1b 0 on sucess, e.g 15 on "node not found".
+[mac]       8b echoed
+[???]       1b always 0
+
+###########################
+0x32 -- ON/OFF            #
+###########################
+Query:
+MAC-Adress (8bytes) 0 turns all on/off
+On/off 0=off 1=on
+
+Answr:
+[status]    1b as above
+[mac]       8b echoed
+[???]       1b always 0
+
+###########################
+0x33 -- CCT               #
+###########################
+MAC-Adress (8bytes),
+CCT ~2700-6500 -- lamps seems to accept also invalid values and echo them back, but no color change.
+Time (0-65535) Unit is ~1/10sec
+
+(Answer seems to be standard as 0x31 and 0x32)
+
+###########################
+0x36 -- RGBW              #
+###########################
+MAC-Adress (8bytes),
+RGBW (one byte each),
+Time (0-65535) Unit is ~1/10sec
+
+(Answer seems to be standard as 0x31 and 0x32)
+
+
+###########################
+0x68 -- get lamp status   #
+###########################
+MAC-Adress (8bytes),
+
+answer:
+[status]    1b as above
+[mac]       8b echoed
+[???]       1b always 0
+[oo]    -1b- 0 is lamp is off, 1 if on. (see above -- fragment matches 0x13!)
+[dim]   -1b- brightness from 0-100
+[cct]   -2b- in K
+[r]     -1b- color component RED
+[g]     -1b- color component GREEN (or greenish...)
+[b]     -1b- color component BLUE
+[w]     -1b- color component WHITE
+
+
+Some Wireshark logs (e.g running the python-lib's testcase script)
+
+>00000000  07 00 02 13 00 00 07 02  01                      ........ .
+    <00000000  33 00 03 13 00 00 07 02  00 01 00 7e 9d 45 09 00 3....... ...~.E..
+    <00000010  00 aa 3e b0 7c 02 01 02  03 07 02 00 00 01 64 8e ..>.|... ......d.
+    <00000020  0a ff ff ff ff 4c 69 63  68 74 20 30 31 00 00 00 .....Lic ht 01...
+    <00000030  00 00 00 00 00                                   .....
+>00000009  06 00 02 1e 00 00 07 03                          ........
+    <00000035  09 00 03 1e 00 00 07 03  00 00 00                ........ ...
+
+>00000000  07 00 02 13 00 00 07 02  01                      ........ .
+    <00000000  33 00 03 13 00 00 07 02  00 01 00 7e 9d 45 09 00 3....... ...~.E..
+    <00000010  00 aa 3e b0 7c 02 01 02  03 07 02 00 00 00 06 87 ..>.|... ........
+    <00000020  19 ff ff ff ff 4c 69 63  68 74 20 30 31 00 00 00 .....Lic ht 01...
+    <00000030  00 00 00 00 00                                   .....
+>00000009  06 00 02 1e 00 00 07 03                          ........
+    >00000035  09 00 03 1e 00 00 07 03  00 00 00                ........ ...
+
+3002K, 50%
+ 00000000  07 00 02 13 00 00 07 02  01                      ........ .
+    00000000  33 00 03 13 00 00 07 02  00 01 00 7e 9d 45 09 00 3....... ...~.E..
+    00000010  00 aa 3e b0 7c 02 01 02  03 07 02 00 00 01 35 c4 ..>.|... ......5.
+    00000020  0b ff ff ff ff 4c 69 63  68 74 20 30 31 00 00 00 .....Lic ht 01...
+    00000030  00 00 00 00 00                                   .....
+00000009  06 00 02 1e 00 00 07 03                          ........
+    00000035  09 00 03 1e 00 00 07 03  00 00 00                ........ ...
+
+
+2700K, 25%
+00000000  07 00 02 13 00 00 07 02  01                      ........ .
+    00000000  33 00 03 13 00 00 07 02  00 01 00 7e 9d 45 09 00 3....... ...~.E..
+    00000010  00 aa 3e b0 7c 02 01 02  03 07 02 00 00 01 1d 8e ..>.|... ........
+    00000020  0a ff ff ff ff 4c 69 63  68 74 20 30 31 00 00 00 .....Lic ht 01...
+    00000030  00 00 00 00 00                                   .....
+00000009  06 00 02 1e 00 00 07 03                          ........
+    00000035  09 00 03 1e 00 00 07 03  00 00 00                ........ ...
+
+
+added Licht 01 to Group Desk (allows python script to complete)
+    00000000  07 00 02 13 00 00 07 02  01                      ........ .
+    00000000  33 00 03 13 00 00 07 02  00 01 00 7e 9d 45 09 00 3....... ...~.E..
+    00000010  00 aa 3e b0 7c 02 01 02  03 07 02 01 00 00 64 8e ..>.|... ......d.
+    00000020  0a ff ff ff ff 4c 69 63  68 74 20 30 31 00 00 00 .....Lic ht 01...
+    00000030  00 00 00 00 00                                   .....
+00000009  06 00 02 1e 00 00 07 03                          ........
+    00000035  1b 00 03 1e 00 00 07 03  00 01 00 01 00 44 65 73 ........ .....Des
+    00000045  6b 00 00 00 00 00 00 00  00 00 00 00 00          k....... .....
+00000011  0e 00 02 26 00 00 07 04  01 00 00 00 00 00 00 00 ...&.... ........
+    00000052  22 00 03 26 00 00 07 04  00 01 00 44 65 73 6b 00 "..&.... ...Desk.
+    00000062  00 00 00 00 00 00 00 00  00 00 00 01 45 09 00 00 ........ ....E...
+    00000072  aa 3e b0 7c                                      .>.|
+00000021  0f 00 02 32 00 00 07 05  01 00 00 00 00 00 00 00 ...2.... ........
+00000031  00                                               .
+    00000076  12 00 03 32 00 00 07 05  00 01 00 01 00 00 00 00 ...2.... ........
+    00000086  00 00 00 00                                      ....
+00000032  11 00 02 31 00 00 07 06  01 00 00 00 00 00 00 00 ...1.... ........
+00000042  00 00 00                                         ...
+    0000008A  12 00 03 31 00 00 07 06  00 01 00 01 00 00 00 00 ...1.... ........
+    0000009A  00 00 00 00                                      ....
+00000045  0f 00 02 32 00 00 07 07  01 00 00 00 00 00 00 00 ...2.... ........
+00000055  01                                               .
+    0000009E  12 00 03 32 00 00 07 07  00 01 00 01 00 00 00 00 ...2.... ........
+    000000AE  00 00 00 00                                      ....
+00000056  11 00 02 31 00 00 07 08  01 00 00 00 00 00 00 00 ...1.... ........
+00000066  19 0a 00                                         ...
+    000000B2  12 00 03 31 00 00 07 08  00 01 00 01 00 00 00 00 ...1.... ........
+    000000C2  00 00 00 00                                      ....
+00000069  0f 00 02 32 00 00 07 09  01 00 00 00 00 00 00 00 ...2.... ........
+00000079  00                                               .
+    000000C6  12 00 03 32 00 00 07 09  00 01 00 01 00 00 00 00 ...2.... ........
+    000000D6  00 00 00 00                                      ....
+0000007A  11 00 02 31 00 00 07 0a  01 00 00 00 00 00 00 00 ...1.... ........
+0000008A  01 0a 00                                         ...
+    000000DA  12 00 03 31 00 00 07 0a  00 01 00 01 00 00 00 00 ...1.... ........
+    000000EA  00 00 00 00                                      ....
+00000000  07 00 02 13 00 00 07 02  01                      ........ .
+    00000000  33 00 03 13 00 00 07 02  00 01 00 7e 9d 45 09 00 3....... ...~.E..
+    00000010  00 aa 3e b0 7c 02 01 02  03 07 02 01 00 00 64 8e ..>.|... ......d.
+    00000020  0a ff ff ff ff 4c 69 63  68 74 20 30 31 00 00 00 .....Lic ht 01...
+    00000030  00 00 00 00 00                                   .....
+00000009  06 00 02 1e 00 00 07 03                          ........
+    00000035  1b 00 03 1e 00 00 07 03  00 01 00 01 00 44 65 73 ........ .....Des
+    00000045  6b 00 00 00 00 00 00 00  00 00 00 00 00          k....... .....
+00000011  0e 00 02 26 00 00 07 04  01 00 00 00 00 00 00 00 ...&.... ........
+    00000052  22 00 03 26 00 00 07 04  00 01 00 44 65 73 6b 00 "..&.... ...Desk.
+    00000062  00 00 00 00 00 00 00 00  00 00 00 01 45 09 00 00 ........ ....E...
+    00000072  aa 3e b0 7c                                      .>.|
+00000021  0f 00 02 32 00 00 07 05  01 00 00 00 00 00 00 00 ...2.... ........
+00000031  00                                               .
+    00000076  12 00 03 32 00 00 07 05  00 01 00 01 00 00 00 00 ...2.... ........
+    00000086  00 00 00 00                                      ....
+00000032  11 00 02 31 00 00 07 06  01 00 00 00 00 00 00 00 ...1.... ........
+00000042  00 00 00                                         ...
+    0000008A  12 00 03 31 00 00 07 06  00 01 00 01 00 00 00 00 ...1.... ........
+    0000009A  00 00 00 00                                      ....
+00000045  0f 00 02 32 00 00 07 07  01 00 00 00 00 00 00 00 ...2.... ........
+00000055  01                                               .
+    0000009E  12 00 03 32 00 00 07 07  00 01 00 01 00 00 00 00 ...2.... ........
+    000000AE  00 00 00 00                                      ....
+00000056  11 00 02 31 00 00 07 08  01 00 00 00 00 00 00 00 ...1.... ........
+00000066  19 0a 00                                         ...
+    000000B2  12 00 03 31 00 00 07 08  00 01 00 01 00 00 00 00 ...1.... ........
+    000000C2  00 00 00 00                                      ....
+00000069  0f 00 02 32 00 00 07 09  01 00 00 00 00 00 00 00 ...2.... ........
+00000079  00                                               .
+    000000C6  12 00 03 32 00 00 07 09  00 01 00 01 00 00 00 00 ...2.... ........
+    000000D6  00 00 00 00                                      ....
+0000007A  11 00 02 31 00 00 07 0a  01 00 00 00 00 00 00 00 ...1.... ........
+0000008A  01 0a 00                                         ...
+    000000DA  12 00 03 31 00 00 07 0a  00 01 00 01 00 00 00 00 ...1.... ........
+    000000EA  00 00 00 00                                      ....

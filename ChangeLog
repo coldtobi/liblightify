@@ -1,0 +1,13 @@
+Liblightify Changelog
+
+Version SONAME 0.0,0 (UNRELEASED)
+  * First version
+  * Supports:
+     - querying lights from the gateway
+     - querying light status from the gateway
+     - manipulating lights. It supports
+         o Set CCT,
+         o Set RGBW
+         o Set brightness
+         o On/Off control (also broadcasted)
+      of course only on lamps that supports it.
