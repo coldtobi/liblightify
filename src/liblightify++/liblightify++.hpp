@@ -50,7 +50,6 @@
 #ifndef LIGHTIFY_CPP_FOR_ANDROID
 #include <string>
 #include <map>
-#include <stdexcept>
 #endif
 
 #include <netdb.h>
@@ -232,9 +231,6 @@ public:
 		_host = 0;
 		if (host) {
 			_host = strdup(host);
-		}
-		if (port > 0xfffful) {
-			throw std::invalid_argument("invalid port");
 		}
 		_port = port;
 		_sockfd = -1;
