@@ -40,16 +40,22 @@
 #ifndef SRC_LIBLIGHTIFY___LIGHTIFY___HPP_
 #define SRC_LIBLIGHTIFY___LIGHTIFY___HPP_
 
+// This switch might help on ANDROID -- to avoid to pull in the full-blown STL.
+// NOTE: This changes API!
+//#define LIGHTIFY_CPP_FOR_ANDROID
+
 #include <liblightify/liblightify.h>
 #include <string.h>
+
+#ifndef LIGHTIFY_CPP_FOR_ANDROID
 #include <string>
 #include <map>
+#include <stdexcept>
+#endif
 
 #include <netdb.h>
 #include <unistd.h>
 #include <errno.h>
-#include <iostream>
-#include <stdexcept>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -66,6 +72,7 @@ protected:
 public:
 	// NOTE: Getters of node information will generally access cached data.
 	// An update from the actual node data has to be explicitly requested.
+	// An exception is the Name: It can only be queried with a scan.
 
 	/** Get the node's name. */
 	const char *GetName(void) const {
@@ -145,12 +152,7 @@ public:
 	 *
 	 * */
 
-	/** Turn on / off
-	 *
-	 * \param on/off boolean for requested state
-	 *
-	 * \returns negative on error
-	 * */
+	/** Turn on / off */
 	int TurnOnOff(bool onoff) {
 		return lightify_request_set_onoff(_ctx, _node, onoff);
 	}
@@ -313,20 +315,50 @@ err_out:
 	int ScanNodes(void) {
 
 		int err;
+		int count = 0;
+
 		if (_sockfd == -1) return -EBADF;
 		_free_nodemap();
 		err = lightify_scan_nodes(_ctx);
 		if (err < 0) return err;
 
+#ifdef LIGHTIFY_CPP_FOR_ANDROID
+		struct lean_nodemap *last_inserted = NULL;
+#endif
 		struct lightify_node *node = NULL;
 		while(node = lightify_get_next_node(_ctx,node)) {
+			count++;
+#ifndef LIGHTIFY_CPP_FOR_ANDROID
 			_nodesmap.insert(std::pair<unsigned long long, Lightify_Node*>(
 					lightify_node_get_nodeadr(node), new Lightify_Node(_ctx, node)));
+#else
+			//struct lean_nodemap *nm = (struct lean_nodemap *) malloc(1,sizeof(struct lean_nodemap);
+			struct lean_nodemap *nm = new lean_nodemap();
+			if (!nm) return -ENOMEM;
+			nm->next = 0;
+			nm->node = new Lightify_Node(_ctx,node);
+
+			if (!last_inserted) {
+				_nodesmap = nm;
+			} else {
+				last_inserted->next = nm;
+			}
+			last_inserted = nm;
+#endif
 		}
-		return 0;
+		return count;
 	}
 
-	/** Turn all lamps on or off. */
+	/** Get direct access to the lighitfy context
+	 *
+	 * \warning advanced use -- improper use can confuse the C++ Wrapper
+	 * and create inconsitent state.
+	*/
+	struct lightify_ctx *GetCtx(void) {
+		return _ctx;
+	}
+
+	/** Actions that can be broadcasted. */
 	int TurnAllOnOff(bool onoff)
 	{
 		return lightify_request_set_onoff(_ctx,NULL,onoff);
@@ -334,15 +366,34 @@ err_out:
 
 	/** Get the node object for a given MAC address */
 	Lightify_Node *GetNode(long long mac) {
+#ifndef LIGHTIFY_CPP_FOR_ANDROID
 		std::map<unsigned long long, Lightify_Node*>::iterator it;
 		it = _nodesmap.find(mac);
 		if (it != _nodesmap.end()) return ((*it).second);
+#else
+		struct lean_nodemap *nm = _nodesmap;
+		while(nm) {
+			if (nm->node->GetMAC() == mac) return nm->node;
+			nm = nm->next;
+		}
+#endif
 		return NULL;
 	}
 
 	/** Get access to the nodesmap. */
-	const std::map<unsigned long long, Lightify_Node*> &GetNodesMap(void) const {
-		return _nodesmap;
+	const  Lightify_Node* GetNodeAtPosX(int x) {
+#ifndef LIGHTIFY_CPP_FOR_ANDROID
+		if (GetNodesCount() < x) return NULL;
+		std::map<unsigned long long, Lightify_Node*>::const_iterator it;
+		it = _nodesmap.begin();
+		while(x--) it++;
+		return  (*it).second;
+#else
+		struct lean_nodemap *nm = _nodesmap;
+		while(nm && x--) {nm = nm->next;}
+		return (nm ? nm->node : NULL);
+
+#endif
 	}
 
 	/** Get the library context -- for direct library access.
@@ -380,14 +431,44 @@ err_out:
 		return 0;
 	}
 
+    int GetNodesCount(void) {
+#ifndef LIGHTIFY_CPP_FOR_ANDROID
+        return _nodesmap.size();
+#else
+		struct lean_nodemap *nm = _nodesmap;
+		int ret = 0;
+		while (nm) {
+			ret++;
+			nm = nm->next;
+		}
+		return ret;
+#endif
+    }
+
+#ifndef LIGHTIFY_CPP_FOR_ANDROID
+	std::map<unsigned long long, Lightify_Node*> &GetNodesMap(void) {
+		return _nodesmap;
+	}
+#endif
 
 private:
 	void _free_nodemap(void) {
+#ifndef LIGHTIFY_CPP_FOR_ANDROID
 		std::map<unsigned long long, Lightify_Node*>::iterator it;
 		for (it = _nodesmap.begin(); it != _nodesmap.end(); it++) {
 			delete((*it).second);
 		}
 		_nodesmap.clear();
+#else
+		struct lean_nodemap *nmtmp, *nm = _nodesmap;
+		while (nm) {
+			nmtmp = nm->next;
+			delete nm->node;
+			delete nm;
+			nm = nmtmp;
+		}
+		_nodesmap = NULL;
+#endif
 	}
 
 	struct lightify_ctx *_ctx;
@@ -395,7 +476,18 @@ private:
 	unsigned int _port;
 	int _sockfd;
 
+#ifndef  LIGHTIFY_CPP_FOR_ANDROID
 	std::map<unsigned long long, Lightify_Node*> _nodesmap;
+#else
+	// this is to avoid avoid STL...
+	struct lean_nodemap {
+		struct lean_nodemap *next;
+		Lightify_Node *node;
+	};
+
+	struct lean_nodemap *_nodesmap;
+#endif
 };
+
 
 #endif /* SRC_LIBLIGHTIFY___LIGHTIFY___HPP_ */
