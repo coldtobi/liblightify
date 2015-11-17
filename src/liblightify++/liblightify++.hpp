@@ -281,6 +281,7 @@ public:
 		/* Now connect to the server */
 		err = connect(_sockfd, (struct sockaddr*) &serv_addr, sizeof(serv_addr));
 		if (err < 0) {
+			err = -errno;
 			goto err_out;
 		}
 
