@@ -268,7 +268,8 @@ public:
 		server = gethostbyname(_host);
 		if (server == NULL) {
 			// no such host
-			err = errno;
+			err = h_errno;
+            if (err>=0) err = -EHOSTUNREACH;
 			goto err_out;
 		}
 
