@@ -265,6 +265,7 @@ public:
 			return err;
 		}
 
+		// FIXME gethostbyname is depreciated.
 		server = gethostbyname(_host);
 		if (server == NULL) {
 			// no such host
