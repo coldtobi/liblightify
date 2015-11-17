@@ -301,9 +301,11 @@ err_out:
 
 	/** Close the (previously) opened socket. */
 	int Close(void) {
+        int i=20;
 		if (_sockfd == -1 ) return -EBADF;
 		lightify_skt_setfd(_ctx, -1);
-		close(_sockfd);
+		int err = -EINTR;
+        while(i-- && err == -EINTR) err = close(_sockfd);
 		_sockfd = -1;
 	}
 
