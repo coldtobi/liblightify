@@ -55,7 +55,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 struct lightify_nodes;
-
 /**
  * lightify_ctx:
  *
@@ -84,6 +83,9 @@ struct lightify_ctx {
 
 	/** pointer to the first node, if any. */
 	struct lightify_node *nodes;
+
+	/** pointer to the first group, if any */
+	struct lightify_group *groups;
 
 	/** request id counter*/
 	long cnt;

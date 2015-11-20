@@ -51,7 +51,7 @@ struct lightify_node {
 
 	/* node address and groups */
 	uint64_t node_address;  /**< MAC of node */
-	uint16_t zone_address;	/**< Zone address */
+	uint16_t zone_address;	/**< Zone address (16 bit short ZLL address)*/
 	uint16_t group_address;	/**< Group address */
 
 	/** lamp type */

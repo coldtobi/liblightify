@@ -46,6 +46,8 @@ src_liblightify_la_SOURCES =\
 	src/context.h \
 	src/node.c \
 	src/node.h \
+	src/groups.c \
+	src/groups.h \
 	src/socket.c \
 	src/socket.h
 

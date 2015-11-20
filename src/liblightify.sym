@@ -37,6 +37,10 @@ global:
 	lightify_request_set_rgbw;
 	lightify_request_set_brightness;
 	lightify_request_update_node;
+	lightify_group_get_next_group;
+	lightify_group_get_name;
+    lightify_group_get_id;
+    lightify_request_scan_groups;
 local:
 	*;
 };

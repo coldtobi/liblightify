@@ -66,8 +66,9 @@ static struct option long_options[] = {
 { "time", required_argument, 0, 't' },
 { "dump", no_argument, 0, 'd' },
 { "wait", required_argument, 0, 'w' },
-
-{ 0, 0, 0, 0 } };
+{ "groups", no_argument, 0, 'g' },
+{ 0, 0, 0, 0 }
+};
 /* getopt_long stores the option index here. */
 
 // commands data
@@ -309,6 +310,22 @@ void dump_nodes_state(struct lightify_ctx *ctx) {
 	printf("|-----------------|------------------|---------|-------|---------|-----|-----|------|-----|-----|-----|-----|---|\n");
 }
 
+void dump_groups(struct lightify_ctx *ctx) {
+
+	int i = lightify_request_scan_groups(ctx);
+	printf("Scan groups: Result %d\n", i);
+
+	if (i > 0) {
+		struct lightify_group *group = NULL;
+		printf("| Group Name       | id     |\n");
+		printf("|------------------|--------|\n");
+		while ((group = lightify_group_get_next_group(ctx,group))) {
+			printf("| %-16s | 0x%04x |\n", lightify_group_get_name(group), lightify_group_get_id(group));
+		}
+		printf("|------------------|--------|\n");
+	}
+}
+
 
 
 int main(int argc, char *argv[]) {
@@ -425,6 +442,12 @@ int main(int argc, char *argv[]) {
 			}
 		}
 		break;
+
+		case 'g': {
+			if (!gonnected) setup_connection(ctx);
+			dump_groups(ctx);
+			break;
+		}
 
 		default:
 			usage(argv);

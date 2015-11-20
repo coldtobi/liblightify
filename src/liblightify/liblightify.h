@@ -409,6 +409,21 @@ int lightify_request_set_brightness(struct lightify_ctx *ctx,
  */
 int lightify_request_update_node(struct lightify_ctx *ctx, struct lightify_node *node);
 
+
+/** opaque struct handling the groups
+ *
+*/
+struct lightify_group;
+
+#warning document me!
+struct lightify_group *lightify_group_get_next_group(struct lightify_ctx *ctx, struct lightify_group *current);
+
+char *lightify_group_get_name(struct lightify_group *grp);
+
+int lightify_group_get_id(struct lightify_group *grp);
+
+int lightify_request_scan_groups(struct lightify_ctx *ctx);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

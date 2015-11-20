@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "context.h"
 #include "log.h"
 #include "node.h"
+#include "groups.h"
 
 #include "socket.h"
 
@@ -257,6 +258,26 @@ enum msg_0x68_answer {
 	ANSWER_0x68_SIZE
 };
 
+enum msg_0x1e_query {
+	QUERY_0x1e = HEADER_PAYLOAD_START,
+	QUERY_0x1e_SIZE
+};
+
+enum msg_0x1e_answer {
+	ANSWER_0x1e_STATE = HEADER_PAYLOAD_START,
+	ANSWER_0x1e_NUMGROUPS,
+	ANSWER_0x1e_HDR_UNKNOWN_ZERO,
+	ANSWER_0x1e_SIZE
+};
+
+enum msg_0x1e_answerpergroup {
+	ANSWER_0x1e_GRP_ID,
+	ANSWER_0x1e_GRP_UNKNOWN_ZERO,
+	ANSWER_0x1e_GRP_NAME,
+	ANSWER_0x1e_GRP_LENGHT= ANSWER_0x1e_GRP_NAME+16
+};
+
+
 // 0 seems success, non-zero error.
 static int decode_status(unsigned char code) {
 	switch (code) {
@@ -449,6 +470,7 @@ LIGHTIFY_EXPORT int lightify_free(struct lightify_ctx *ctx) {
 }
 
 LIGHTIFY_EXPORT int lightify_scan_nodes(struct lightify_ctx *ctx) {
+	int ret;
 	int n,m;
 	int no_of_nodes;
 	long token;
@@ -516,6 +538,7 @@ LIGHTIFY_EXPORT int lightify_scan_nodes(struct lightify_ctx *ctx) {
 		info(ctx, "strange byte at PAYLOAD_START: %d\n", msg[HEADER_PAYLOAD_START]);
 	}
 
+	ret = 0;
 	/* read each node..*/
 	while(no_of_nodes--) {
 		node = NULL;
@@ -578,8 +601,9 @@ LIGHTIFY_EXPORT int lightify_scan_nodes(struct lightify_ctx *ctx) {
 		lightify_node_set_online_status(node, msg[ANSWER_0x13_NODE_ONLINE_STATE]);
 		lightify_node_set_brightness(node,msg[ANSWER_0x13_NODE_DIM_LEVEL]);
 		lightify_node_set_stale(node, 0);
+		ret++;
 	}
-	return 0;
+	return ret;
 }
 
 LIGHTIFY_EXPORT int lightify_request_set_onoff(struct lightify_ctx *ctx, struct lightify_node *node, int onoff) {
@@ -886,4 +910,97 @@ LIGHTIFY_EXPORT int lightify_request_update_node(struct lightify_ctx *ctx,
 	n = -decode_status(msg[ANSWER_0x68_STATE]);
 	lightify_node_set_stale(node, (n!=0));
 	return n;
+}
+
+// FIXME export in lightify.h and *,sym
+LIGHTIFY_EXPORT int lightify_request_scan_groups(struct lightify_ctx *ctx) {
+	int n,m;
+	int no_of_grps;
+	long token;
+	int ret;
+
+	if (!ctx) return -EINVAL;
+	if (!ctx->socket_read_fn && !ctx->socket_write_fn && ctx->socket == -1) return -EBADF;
+
+	/* remove old group information */
+	struct lightify_group *group = ctx->groups;
+	while ( (group = lightify_group_get_next_group(ctx, NULL))) {
+		dbg(ctx, "freeing group %p.\n", group);
+		lightify_group_remove(group);
+	}
+
+	token = ++ctx->cnt;
+
+	/* to avoid problems with packing, we need to use a char array.
+	 * to assist we'll have this fine enum */
+	uint8_t msg[ANSWER_0x1e_GRP_LENGHT];
+
+	/* 0x1e command to get all groups. */
+	fill_telegram_header(msg, QUERY_0x1e_SIZE, token, 0x00, 0x1e);
+
+	n = ctx->socket_write_fn(ctx, msg, QUERY_0x1e_SIZE);
+	if ( n < 0 ) {
+		info(ctx,"socket_write_fn error %d\n", n);
+		return n;
+	}
+	if ( n != QUERY_0x1e_SIZE) {
+		info(ctx,"short write %d!=%d\n", QUERY_0x1e_SIZE, n);
+		return -EIO;
+	}
+
+	/* read the header */
+	n = ctx->socket_read_fn(ctx, msg, ANSWER_0x1e_SIZE);
+	if (n < 0) {
+		info(ctx,"socket_read_fn error %d\n", n);
+		return n;
+	}
+	if (n != ANSWER_0x1e_SIZE) {
+		info(ctx,"short read %d!=%d\n", ANSWER_0x1e_SIZE, n);
+		return -EIO;
+	}
+
+	/* check the header if plausible */
+	/* check if the token we've supplied is also the returned one. */
+	n = check_header_response(msg, token, 0x1e);
+	if ( n < 0 ) {
+		info(ctx,"Invalid response (header)\n");
+		return n;
+	}
+
+	/* check if the message length is as expected */
+	no_of_grps = msg[ANSWER_0x1e_NUMGROUPS];
+	m = msg[HEADER_LEN_LSB] | (msg[HEADER_LEN_MSB] << 8);
+	info(ctx, "0x1e: received %d bytes\n",m);
+	if ( no_of_grps * ANSWER_0x1e_GRP_LENGHT + ANSWER_0x1e_SIZE - 2 != m) {
+		info(ctx, "Reponse len unexpected for %d groups: %d!=%d.\n", no_of_grps,
+				no_of_grps * ANSWER_0x1e_GRP_LENGHT + ANSWER_0x1e_SIZE - 2, m);
+		return -EPROTO;
+	}
+
+	if (msg[HEADER_PAYLOAD_START]) {
+		info(ctx, "strange byte at PAYLOAD_START: %d\n", msg[HEADER_PAYLOAD_START]);
+	}
+
+	ret = 0;
+	/* read each node..*/
+	while(no_of_grps--) {
+		group = NULL;
+		n = ctx->socket_read_fn(ctx, msg, ANSWER_0x1e_GRP_LENGHT);
+		if (n< 0) return n;
+		if (ANSWER_0x1e_GRP_LENGHT != n ) {
+			info(ctx,"read group info: short read %d!=%d\n", ANSWER_0x1e_GRP_LENGHT, n);
+			return -EIO;
+		}
+
+		n = lightify_group_new(ctx,&group);
+		if (n < 0) {
+			info(ctx, "create group error %d", n);
+			return n;
+		}
+
+		lightify_group_set_id(group, msg[ANSWER_0x1e_GRP_ID]);
+		lightify_group_set_name(group, &msg[ANSWER_0x1e_GRP_NAME]);
+		ret++;
+	}
+	return ret;
 }

@@ -49,6 +49,10 @@ int write_to_socket(struct lightify_ctx *ctx, unsigned char *msg, size_t size) {
 	size_t m = size; /*<< current position */
 	struct timeval to;
 
+#ifdef ENABLE_DEBUG
+	unsigned char *msg_ = msg;
+#endif
+
 	do {
 		n = write(fd, msg, m);
 		if (n < 0) {
@@ -88,7 +92,7 @@ int write_to_socket(struct lightify_ctx *ctx, unsigned char *msg, size_t size) {
 				buf[0] = 0;
 				j = 0;
 			}
-			sprintf(buf + strlen(buf), " %02x", msg_[k]);
+			sprintf(buf + strlen(buf), " 0x%02x,", msg_[k]);
 		}
 		dbg(ctx,"> %s\n",buf);
 	}
@@ -103,6 +107,10 @@ int read_from_socket(struct lightify_ctx *ctx, unsigned char *msg, size_t size )
 	int fd = lightify_skt_getfd(ctx);
 	size_t m = size;
 	struct timeval to;
+
+#ifdef ENABLE_DEBUG
+	unsigned char *msg_ = msg;
+#endif
 
 	do {
 		n = read(fd, msg, m);
@@ -152,7 +160,7 @@ int read_from_socket(struct lightify_ctx *ctx, unsigned char *msg, size_t size )
 				buf[0] = 0;
 				j = 0;
 			}
-			sprintf(buf + strlen(buf), " %02x", msg_[k]);
+			sprintf(buf + strlen(buf), " 0x%02x,", msg_[k]);
 		}
 		dbg(ctx,"< %s\n",buf);
 	}
