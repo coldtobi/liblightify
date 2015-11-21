@@ -183,11 +183,11 @@ const static char requpdate_answer_node[] = {
 
 
 const static char req_getgroups[] = {
-	0x07, 0x00, 0x00, 0x1e, 0x00, 0x00, 0x00, 0x00, 0x35
+	0x07, 0x00, 0x00, 0x1e, 0x01, 0x00, 0x00, 0x00, 0x35
 };
 
 const static char req_getgroups_answer[] = {
- 0x3f, 0x00, 0x01, 0x1e, 0x00, 0x00, 0x00, 0x00,
+ 0x3f, 0x00, 0x01, 0x1e, 0x01, 0x00, 0x00, 0x00,
  0x00, 0x03, 0x00,
  0x01, 0x00, 0x47, 0x72, 0x75, 0x70, 0x70, 0x65,
  0x31, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -700,6 +700,69 @@ Suite *liblightify_functional_manipulate_node(void) {
 	return s;
 }
 
+START_TEST(lightify_tst_groups_basic) {
+
+	int err;
+	struct fake_socket *mfs = calloc(1, sizeof(struct fake_socket));
+	struct lightify_group *group, *group2;
+
+	lightify_set_socket_fn(_ctx, my_write_to_socket, my_read_from_socket);
+	lightify_set_userdata(_ctx, mfs);
+
+	// query groups
+	{
+		helper_mfs_setup_answer(mfs, req_getgroups_answer,
+				sizeof(req_getgroups_answer));
+
+		err = lightify_request_scan_groups(_ctx);
+
+		if ( err < 0) {
+		   print_protocol_mismatch_write(mfs,req_getgroups);
+		   print_protocol_mismatch_read(mfs,req_getgroups_answer);
+		}
+
+		// The sample recorded answer has 3 Groups in it.
+		ck_assert_int_eq(err, 3);
+	} while(0);
+
+	// Obtain pointer to group
+	{
+		// Get first group
+		group = lightify_group_get_next_group(_ctx, NULL);
+		ck_assert(group);
+		// Second.
+		group2 = lightify_group_get_next_group(_ctx,group);
+		ck_assert(group2);
+		// Thrird
+		group2 = lightify_group_get_next_group(_ctx,group2);
+		ck_assert(group2);
+		// no Fourth
+		group2 = lightify_group_get_next_group(_ctx,group2);
+		ck_assert(!group2);
+	}
+
+	//
+
+
+
+}END_TEST
+
+Suite *liblightify_tst_groups_basic(void) {
+	Suite *s;
+	TCase *tc;
+	s = suite_create("lightify_tst_groups_basic");
+
+	/* Core test case */
+	tc = tcase_create("lightify_tst_groups_basic");
+
+	tcase_add_unchecked_fixture(tc, setup, teardown);
+	tcase_add_test(tc, lightify_tst_groups_basic);
+	suite_add_tcase(s, tc);
+
+	return s;
+}
+
+
 int main(void) {
 	int number_failed;
 	Suite *s;
@@ -709,6 +772,7 @@ int main(void) {
 	srunner_add_suite(sr, liblightify_API_suite());
 	srunner_add_suite(sr, liblightify_functional_nodes());
 	srunner_add_suite(sr, liblightify_functional_manipulate_node());
+	srunner_add_suite(sr, liblightify_tst_groups_basic());
 
 	srunner_set_tap(sr, "-");
 	srunner_set_fork_status(sr, CK_NOFORK);
