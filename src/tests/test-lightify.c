@@ -49,6 +49,39 @@ struct fake_socket {
 } my_fakesocket;
 
 
+void print_protocol_mismatch_write(struct fake_socket *mfs, unsigned char *should) {
+	char buf[512] ="\nWROTE:\n\n";
+
+	int found = 0;
+	int i = 0;
+	for (i = 0; i < mfs->size_write; i++) {
+		unsigned int one, two;
+		one = 0xff & mfs->buf_write[i];
+		two = 0xff & should[i];
+		sprintf(buf + strlen(buf), " %02x%c=%02x", one,
+				(one == two ? '=' : '!'), two);
+		if (one != two) found =1;
+	}
+	if (found) ck_abort_msg(buf);
+}
+
+void print_protocol_mismatch_read(struct fake_socket *mfs, unsigned char *should) {
+	char buf[512] ="\nREAD\n\n";
+
+	int i = 0;
+	int found = 0;
+	for (i = 0; i < mfs->size_read; i++) {
+		unsigned int one, two;
+		one = 0xff & mfs->buf_read[i];
+		two = 0xff & should[i];
+		sprintf(buf + strlen(buf), " %02x%c=%02x", one,
+				(one == two ? '=' : '!'), two);
+		if (one != two) found =1;
+	}
+	if (found) ck_abort_msg(buf);
+}
+
+
 // testdata
 
 // expected string to be sent to the gateway when scanning for nodes
