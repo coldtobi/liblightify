@@ -257,7 +257,6 @@ START_TEST(lightify_context_base_NULL_checks)
 		ck_assert_int_eq(lightify_group_get_id(NULL), -EINVAL);
 		ck_assert_int_eq(lightify_group_get_name(NULL), NULL);
 
-
 	}END_TEST
 
 START_TEST(lightify_context_object)
@@ -746,9 +745,23 @@ START_TEST(lightify_tst_groups_basic) {
 		// no Fourth
 		group2 = lightify_group_get_next_group(_ctx,group2);
 		ck_assert(!group2);
-	}
+	} while(0);
 
-	//
+	// Check if name and id is ok for those speciems..
+	{
+		group = lightify_group_get_next_group(_ctx, NULL);
+		ck_assert_int_eq(strcmp("Gruppe1", lightify_group_get_name(group)),0);
+		ck_assert_int_eq(lightify_group_get_id(group), 1);
+		group = lightify_group_get_next_group(_ctx, group);
+		ck_assert_int_eq(strcmp("Gruppe2", lightify_group_get_name(group)),0);
+		ck_assert_int_eq(lightify_group_get_id(group), 2);
+		group = lightify_group_get_next_group(_ctx, group);
+		ck_assert_int_eq(strcmp("Gruppe3", lightify_group_get_name(group)),0);
+		ck_assert_int_eq(lightify_group_get_id(group), 3);
+
+
+	} while(0);
+
 
 
 
