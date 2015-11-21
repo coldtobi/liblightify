@@ -135,6 +135,7 @@ LIGHTIFY_EXPORT int lightify_group_get_id(struct lightify_group *grp) {
 
 // #FIXME export and document
 LIGHTIFY_EXPORT struct lightify_group *lightify_group_get_next_group(struct lightify_ctx *ctx, struct lightify_group *current) {
+	if (!ctx) return NULL;
 	if (!current) return ctx->groups;
 	return current->next;
 }
