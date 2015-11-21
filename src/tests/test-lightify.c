@@ -251,6 +251,13 @@ START_TEST(lightify_context_base_NULL_checks)
 		printf("now testing context::nodes\n");
 		ck_assert_int_eq(lightify_get_next_node(NULL,NULL), NULL);
 
+		printf("now testing context::groups\n");
+		ck_assert_int_eq(lightify_request_scan_groups(NULL), -EINVAL);
+		ck_assert_int_eq(lightify_group_get_next_group(NULL,NULL), NULL);
+		ck_assert_int_eq(lightify_group_get_id(NULL), -EINVAL);
+		ck_assert_int_eq(lightify_group_get_name(NULL), NULL);
+
+
 	}END_TEST
 
 START_TEST(lightify_context_object)
