@@ -177,7 +177,8 @@ struct timeval lightify_skt_getiotimeout(struct lightify_ctx *ctx);
 /** Ask the gateway to provide informations about attached nodes
  *
  * @param ctx context
- * @return 0 on success, negative on errors.
+ * @return >=0 on success, negative on errors.
+ * The number returned equals to the number of nodes found.
  *
  * The library will query the gateway to submit all known nodes.
  *
@@ -185,6 +186,10 @@ struct timeval lightify_skt_getiotimeout(struct lightify_ctx *ctx);
  * will be removed from the list.
  *
  * \warning This will invalidate all pointers to node structures!
+ *
+ * \note on errors it might be that already a few nodes have been successfully
+ * parsed. This can be checked via the API to retrieve node pointers:
+ * If
  *
  */
 int lightify_scan_nodes(struct lightify_ctx *ctx);
