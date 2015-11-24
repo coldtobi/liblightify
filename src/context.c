@@ -1039,3 +1039,63 @@ LIGHTIFY_EXPORT int lightify_request_scan_groups(struct lightify_ctx *ctx) {
 	}
 	return ret;
 }
+
+
+/* Group control */
+LIGHTIFY_EXPORT int lightify_request_group_set_onoff(struct lightify_ctx *ctx, struct lightify_group *group, int onoff) {
+	if (!ctx || !group) return -EINVAL;
+
+	int ret = lightify_request_set_onoff(ctx, lightify_group_get_id(group), 1, onoff);
+
+	struct lightify_node *node = NULL;
+	while  ( (node = lightify_group_get_next_node_in_group(group,node))) {
+		lightify_node_set_onoff(node, onoff);
+		if (ret < 0 ) lightify_node_set_stale(node, 1);
+	}
+	return ret;
+}
+
+LIGHTIFY_EXPORT int lightify_request_group_set_cct(struct lightify_ctx *ctx, struct lightify_group *group, unsigned int cct, unsigned int fadetime) {
+	if (!ctx || !group) return -EINVAL;
+
+	int ret = lightify_request_set_cct(ctx, lightify_group_get_id(group), 1, cct, fadetime);
+
+	struct lightify_node *node = NULL;
+	while  ( (node = lightify_group_get_next_node_in_group(group,node))) {
+		lightify_node_set_cct(node, cct);
+		if (ret < 0 ) lightify_node_set_stale(node, 1);
+	}
+	return ret;
+}
+
+LIGHTIFY_EXPORT int lightify_request_group_set_rgbw(struct lightify_ctx *ctx,
+		struct lightify_group *group, unsigned int r, unsigned int g,
+		unsigned int b,unsigned int w,unsigned int fadetime) {
+	if (!ctx || !group) return -EINVAL;
+
+	int ret = lightify_request_set_rgbw(ctx, lightify_group_get_id(group), 1, r, g, b, w , fadetime);
+
+	struct lightify_node *node = NULL;
+	while  ( (node = lightify_group_get_next_node_in_group(group,node))) {
+		lightify_node_set_red(node, r);
+		lightify_node_set_green(node, g);
+		lightify_node_set_blue(node, b);
+		lightify_node_set_white(node, w);
+		if (ret < 0 ) lightify_node_set_stale(node, 1);
+	}
+	return ret;
+}
+
+LIGHTIFY_EXPORT int lightify_request_group_set_brightness(struct lightify_ctx *ctx,
+		struct lightify_group *group, unsigned int level, unsigned int fadetime) {
+	if (!ctx || !group) return -EINVAL;
+
+	int ret = lightify_request_set_brightness(ctx, lightify_group_get_id(group), 1, level , fadetime);
+
+	struct lightify_node *node = NULL;
+	while  ( (node = lightify_group_get_next_node_in_group(group,node))) {
+		lightify_node_set_brightness(node, level);
+		if (ret < 0 ) lightify_node_set_stale(node, 1);
+	}
+	return ret;
+}

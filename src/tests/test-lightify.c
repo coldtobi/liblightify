@@ -49,7 +49,7 @@ struct fake_socket {
 } my_fakesocket;
 
 
-void print_protocol_mismatch_write(struct fake_socket *mfs, unsigned char *should) {
+void print_protocol_mismatch_write(struct fake_socket *mfs, const unsigned char *should) {
 	char buf[512] ="\nWROTE:\n\n";
 
 	int found = 0;
@@ -65,7 +65,7 @@ void print_protocol_mismatch_write(struct fake_socket *mfs, unsigned char *shoul
 	if (found) ck_abort_msg(buf);
 }
 
-void print_protocol_mismatch_read(struct fake_socket *mfs, unsigned char *should) {
+void print_protocol_mismatch_read(struct fake_socket *mfs, const unsigned char *should) {
 	char buf[512] ="\nREAD\n\n";
 
 	int i = 0;
@@ -232,8 +232,8 @@ START_TEST(lightify_context_base_NULL_checks)
 		// tests ABI default behaviour when supplying a NULL pointer to the context
 
 		printf("now testing context::userdata\n");
-		ck_assert_int_eq(lightify_get_userdata(NULL), NULL);
-		ck_assert_int_eq(lightify_set_userdata(NULL,0), -EINVAL);
+		ck_assert_ptr_eq(lightify_get_userdata(NULL), NULL);
+		ck_assert_int_eq(lightify_set_userdata(NULL,NULL), -EINVAL);
 
 		printf("now testing context::log\n");
 		ck_assert_int_eq(lightify_set_log_priority(NULL,0), -EINVAL);
@@ -249,13 +249,13 @@ START_TEST(lightify_context_base_NULL_checks)
 		ck_assert_int_eq(lightify_free(NULL), -EINVAL);
 
 		printf("now testing context::nodes\n");
-		ck_assert_int_eq(lightify_get_next_node(NULL,NULL), NULL);
+		ck_assert_ptr_eq(lightify_get_next_node(NULL,NULL), NULL);
 
 		printf("now testing context::groups\n");
 		ck_assert_int_eq(lightify_request_scan_groups(NULL), -EINVAL);
-		ck_assert_int_eq(lightify_group_get_next_group(NULL,NULL), NULL);
+		ck_assert_ptr_eq(lightify_group_get_next_group(NULL,NULL), NULL);
 		ck_assert_int_eq(lightify_group_get_id(NULL), -EINVAL);
-		ck_assert_int_eq(lightify_group_get_name(NULL), NULL);
+		ck_assert_ptr_eq(lightify_group_get_name(NULL), NULL);
 
 	}END_TEST
 

@@ -420,14 +420,90 @@ int lightify_request_update_node(struct lightify_ctx *ctx, struct lightify_node 
 */
 struct lightify_group;
 
-#warning document me!
+/** Get next known group
+ *
+ * @param ctx context
+ * @param current last group queried
+ * @return next group in list or NULL if there isn't
+ */
 struct lightify_group *lightify_group_get_next_group(struct lightify_ctx *ctx, struct lightify_group *current);
 
-char *lightify_group_get_name(struct lightify_group *grp);
+/** Get the name associated with the group
+ *
+ * @param grp Group pointer
+ * @return pointer to a string with the name
+ */
+const char *lightify_group_get_name(struct lightify_group *grp);
 
+/** Get the ID of the group
+ *
+ * @param grp
+ * @return group address or negative on error.
+ */
 int lightify_group_get_id(struct lightify_group *grp);
 
+/** Request the list of known groups
+ *
+ * @param ctx context
+ * @return negaitve on error, else number of retrieved groups (might be zero)
+ */
 int lightify_request_scan_groups(struct lightify_ctx *ctx);
+
+/** Get the next node ptr associated with the group
+ *
+ * @param grp group the node must be in
+ * @param lastnode last node asked for, NULL if the first
+ * @return NULL is not found, else pointer.
+ *
+ * \note you must scan for nodes to be able to associate nodes ptr with grps.
+ */
+struct lightify_node *lightify_group_get_next_node_in_group(struct lightify_group *grp, struct lightify_node *lastnode);
+
+/** Request group to be turned off or on
+ *
+ * @param ctx context
+ * @param group group ptr
+ * @param onoff on or off ( true or false)
+ * @return >=0 on success. negtaive on error.
+ */
+int lightify_request_group_set_onoff(struct lightify_ctx *ctx, struct lightify_group *group, int onoff);
+
+/*** Set group CCT
+ *
+ * @param ctx context
+ * @param group group
+ * @param cct CCT
+ * @param fadetime time in 1/10 secs
+ * @return >=0 on success. negtaive on error.
+ */
+int lightify_request_group_set_cct(struct lightify_ctx *ctx, struct lightify_group *group, unsigned int cct, unsigned int fadetime);
+
+/*** Set RGBW values
+ *
+ * @param ctx
+ * @param group
+ * @param r
+ * @param g
+ * @param b
+ * @param w
+ * @param fadetime
+ * @return >=0 on success. negtaive on error.
+ */
+int lightify_request_group_set_rgbw(struct lightify_ctx *ctx,
+		struct lightify_group *group, unsigned int r, unsigned int g,
+		unsigned int b,unsigned int w,unsigned int fadetime) ;
+
+/** Set Group brightness
+ *
+ * @param ctx
+ * @param group
+ * @param level
+ * @param fadetime
+ * @return >=0 on success. negtaive on error.
+ */
+int lightify_request_group_set_brightness(struct lightify_ctx *ctx,
+		struct lightify_group *group, unsigned int level, unsigned int fadetime) ;
+
 
 #ifdef __cplusplus
 } /* extern "C" */

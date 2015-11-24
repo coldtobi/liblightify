@@ -117,7 +117,7 @@ int lightify_group_set_name(struct lightify_group *grp, unsigned char *name) {
 	return 0;
 }
 
-LIGHTIFY_EXPORT  char *lightify_group_get_name(struct lightify_group *grp) {
+LIGHTIFY_EXPORT  const char *lightify_group_get_name(struct lightify_group *grp) {
 	if (!grp) return 0;
     return grp->name;
 }
@@ -138,4 +138,15 @@ LIGHTIFY_EXPORT struct lightify_group *lightify_group_get_next_group(struct ligh
 	if (!ctx) return NULL;
 	if (!current) return ctx->groups;
 	return current->next;
+}
+
+// #FIXME export and document
+LIGHTIFY_EXPORT struct lightify_node *lightify_group_get_next_node_in_group(struct lightify_group *grp, struct lightify_node *lastnode) {
+	if (!grp) return NULL;
+	uint16_t grpmask = 1 << (grp->id);
+
+	while ( lastnode = lightify_get_next_node(grp->ctx, lastnode)) {
+		if ( grpmask & lightify_node_get_grpadr(lastnode)) return lastnode;
+	}
+	return NULL;
 }
