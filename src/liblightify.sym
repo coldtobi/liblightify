@@ -32,15 +32,20 @@ global:
 	lightify_node_is_on;
 	lightify_node_is_stale;
 	lightify_node_get_onlinestate;
-	lightify_request_set_onoff;
-	lightify_request_set_cct;
-	lightify_request_set_rgbw;
-	lightify_request_set_brightness;
+	lightify_request_node_set_onoff;
+	lightify_request_node_set_cct;
+	lightify_request_node_set_rgbw;
+	lightify_request_node_set_brightness;
 	lightify_request_update_node;
 	lightify_group_get_next_group;
 	lightify_group_get_name;
     lightify_group_get_id;
+    lightify_group_get_next_node_in_group;
     lightify_request_scan_groups;
+    lightify_request_group_set_onoff;
+	lightify_request_group_set_cct;
+	lightify_request_group_set_rgbw;
+	lightify_request_group_set_brightness;
 local:
 	*;
 };

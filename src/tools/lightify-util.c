@@ -121,13 +121,13 @@ void command_set_0_1(struct lightify_ctx *ctx) {
 	if (command_on) {
 		command_on = command_on > 0 ? 1 : 0;
 		if (!name_data) {
-			lightify_request_set_onoff(ctx, 0, command_on);
+			lightify_request_node_set_onoff(ctx, 0, command_on);
 		} else {
 			node = NULL;
 			while ((node = lightify_get_next_node(ctx, node))) {
 				if (0 == strcmp(name_data, lightify_node_get_name(node))) {
 					if (verbose_flag) printf("node %s %s\n", lightify_node_get_name(node), command_on ? "on" : "off");
-					lightify_request_set_onoff(ctx, node, command_on);
+					lightify_request_node_set_onoff(ctx, node, command_on);
 					break;
 				}
 			}
@@ -146,7 +146,7 @@ void command_set_cct(struct lightify_ctx *ctx) {
 			if (verbose_flag) printf("node %s cct %d in time %d\n",
 					lightify_node_get_name(node), command_cct_data,
 					fadetime);
-			lightify_request_set_cct(ctx, node, command_cct_data, fadetime);
+			lightify_request_node_set_cct(ctx, node, command_cct_data, fadetime);
 			break;
 		}
 	}
@@ -163,7 +163,7 @@ void command_set_rgbw(struct lightify_ctx *ctx) {
 			if (verbose_flag) printf("node %s rgbw %d,%d,%d,%d in time %d\n",
 					lightify_node_get_name(node), command_r_r,
 					command_r_g, command_r_b, command_r_w, fadetime);
-			lightify_request_set_rgbw(ctx, node, command_r_r,
+			lightify_request_node_set_rgbw(ctx, node, command_r_r,
 					command_r_g, command_r_b, command_r_w, fadetime);
 			break;
 		}
@@ -180,7 +180,7 @@ void command_set_lvl(struct lightify_ctx *ctx) {
 		if (0 == strcmp(name_data, lightify_node_get_name(node))) {
 			if (verbose_flag) printf("node %s rgbw brightness %d in time %d\n",
 					lightify_node_get_name(node), command_l_data , fadetime);
-			lightify_request_set_brightness(ctx, node, command_l_data, fadetime);
+			lightify_request_node_set_brightness(ctx, node, command_l_data, fadetime);
 			break;
 		}
 	}

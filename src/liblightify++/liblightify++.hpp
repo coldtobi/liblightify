@@ -153,7 +153,7 @@ public:
 
 	/** Turn on / off */
 	int TurnOnOff(bool onoff) {
-		return lightify_request_set_onoff(_ctx, _node, onoff);
+		return lightify_request_node_set_onoff(_ctx, _node, onoff);
 	}
 
 	/** Set color temperature
@@ -164,7 +164,7 @@ public:
 	 *  \returns negative on error
 	 */
 	int SetCCT(int cct, int time) {
-		return lightify_request_set_cct(_ctx, _node, cct, time);
+		return lightify_request_node_set_cct(_ctx, _node, cct, time);
 	}
 
 	/** Set color components
@@ -182,7 +182,7 @@ public:
 	 * \returns negative on error
 	 * */
 	int SetRGBW(int red, int green, int blue, int white, int time) {
-		return lightify_request_set_rgbw(_ctx,_node, red, green, blue, white, time);
+		return lightify_request_node_set_rgbw(_ctx,_node, red, green, blue, white, time);
 	}
 
 	/** Set brightness
@@ -193,7 +193,7 @@ public:
 	 *  \returns negative on error
 	 * */
 	int SetBrightness(int level, int time) {
-		return lightify_request_set_brightness(_ctx, _node, level, time);
+		return lightify_request_node_set_brightness(_ctx, _node, level, time);
 	}
 
 	/** Query updated node information from the gateway
@@ -362,7 +362,7 @@ err_out:
 	/** Actions that can be broadcasted. */
 	int TurnAllOnOff(bool onoff)
 	{
-		return lightify_request_set_onoff(_ctx,NULL,onoff);
+		return lightify_request_node_set_onoff(_ctx,NULL,onoff);
 	}
 
 	/** Get the node object for a given MAC address */

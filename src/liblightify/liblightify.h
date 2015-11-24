@@ -361,7 +361,7 @@ int lightify_node_get_onlinestate(struct lightify_node* node);
  * @param onoff 1 to turn on, 0 do turn off
  * @return negative on error, 0 on success
  */
-int lightify_request_set_onoff(struct lightify_ctx *ctx, struct lightify_node *node, int onoff);
+int lightify_request_node_set_onoff(struct lightify_ctx *ctx, struct lightify_node *node, int onoff);
 
 /** Set CCT on lamp with configurable time.
  *
@@ -371,7 +371,7 @@ int lightify_request_set_onoff(struct lightify_ctx *ctx, struct lightify_node *n
  * @param fadetime in 1/10 seconds. 0 is instant.
  * @return
  */
-int lightify_request_set_cct(struct lightify_ctx *ctx, struct lightify_node *node, unsigned int cct, unsigned int fadetime);
+int lightify_request_node_set_cct(struct lightify_ctx *ctx, struct lightify_node *node, unsigned int cct, unsigned int fadetime);
 
 /** Set RGBW values
  *
@@ -386,7 +386,7 @@ int lightify_request_set_cct(struct lightify_ctx *ctx, struct lightify_node *nod
  * @param fadetime time in 1/10 seconds to reach final values.
  * @return
  */
-int lightify_request_set_rgbw(struct lightify_ctx *ctx,
+int lightify_request_node_set_rgbw(struct lightify_ctx *ctx,
 		struct lightify_node *node, unsigned int r, unsigned int g,
 		unsigned int b,unsigned int w,unsigned int fadetime);
 
@@ -398,7 +398,7 @@ int lightify_request_set_rgbw(struct lightify_ctx *ctx,
  * @param fadetime in 1/10 seconds
  * @return
  */
-int lightify_request_set_brightness(struct lightify_ctx *ctx,
+int lightify_request_node_set_brightness(struct lightify_ctx *ctx,
 		struct lightify_node *node, unsigned int level, unsigned int fadetime);
 
 /** Update node information cache

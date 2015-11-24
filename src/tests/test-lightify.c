@@ -519,7 +519,7 @@ START_TEST(lightify_tst_manipulate_nodes)
 					sizeof(turnonlight_answer_broadcast));
 
 			// test: turn on light, broadcast
-			err = lightify_request_set_onoff(_ctx, NULL, 1);
+			err = lightify_request_node_set_onoff(_ctx, NULL, 1);
 			ck_assert_int_eq(err, 0);
 			err = memcmp(mfs->buf_write, turnonlight_query_broadcast,
 					mfs->size_write);
@@ -528,7 +528,7 @@ START_TEST(lightify_tst_manipulate_nodes)
 			// test: turn on light, addessing node
 			helper_mfs_setup_answer(mfs, turnonlight_answer_node,
 					sizeof(turnonlight_answer_node));
-			err = lightify_request_set_onoff(_ctx,
+			err = lightify_request_node_set_onoff(_ctx,
 					lightify_get_next_node(_ctx, NULL), 1);
 			ck_assert_int_eq(err, 0);
 
@@ -561,7 +561,7 @@ START_TEST(lightify_tst_manipulate_nodes)
 		do {
 			helper_mfs_setup_answer(mfs, changecct_answer_node,
 					sizeof(changecct_answer_node));
-			err = lightify_request_set_cct(_ctx, lightify_get_next_node(_ctx, NULL),
+			err = lightify_request_node_set_cct(_ctx, lightify_get_next_node(_ctx, NULL),
 					2700, 10);
 			ck_assert_int_eq(err, 0);
 			err = memcmp(mfs->buf_write, changecct_query_node, mfs->size_write);
@@ -592,7 +592,7 @@ START_TEST(lightify_tst_manipulate_nodes)
 		do {
 			helper_mfs_setup_answer(mfs, setrgbw_answer_node,
 					sizeof(setrgbw_answer_node));
-			err = lightify_request_set_rgbw(_ctx, lightify_get_next_node(_ctx, NULL),
+			err = lightify_request_node_set_rgbw(_ctx, lightify_get_next_node(_ctx, NULL),
 					1,2,3,4,10);
 			ck_assert_int_eq(err, 0);
 			err = memcmp(mfs->buf_write, setrgbw_query_node, mfs->size_write);
@@ -627,7 +627,7 @@ START_TEST(lightify_tst_manipulate_nodes)
 		do {
 			helper_mfs_setup_answer(mfs, setbright_answer_node,
 					sizeof(setbright_answer_node));
-			err = lightify_request_set_brightness(_ctx, lightify_get_next_node(_ctx, NULL),
+			err = lightify_request_node_set_brightness(_ctx, lightify_get_next_node(_ctx, NULL),
 					0x12,10);
 			ck_assert_int_eq(err, 0);
 			err = memcmp(mfs->buf_write, setbright_query_node, mfs->size_write);
@@ -758,8 +758,6 @@ START_TEST(lightify_tst_groups_basic) {
 		group = lightify_group_get_next_group(_ctx, group);
 		ck_assert_int_eq(strcmp("Gruppe3", lightify_group_get_name(group)),0);
 		ck_assert_int_eq(lightify_group_get_id(group), 3);
-
-
 	} while(0);
 
 

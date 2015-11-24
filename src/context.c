@@ -606,22 +606,19 @@ LIGHTIFY_EXPORT int lightify_scan_nodes(struct lightify_ctx *ctx) {
 	return ret;
 }
 
-LIGHTIFY_EXPORT int lightify_request_set_onoff(struct lightify_ctx *ctx, struct lightify_node *node, int onoff) {
+static int lightify_request_set_onoff(struct lightify_ctx *ctx, uint64_t adr, int isgroup, int onoff) {
 	unsigned char msg[32];
 	int n;
 	if (!ctx) return -EINVAL;
 
 	/* normalize to boolean -- int are 16bits...*/
 	onoff = (onoff != 0);
-
-	uint64_t node_adr = -1;
-	uint64_t node_adr2;
-	if (node) node_adr = lightify_node_get_nodeadr(node);
+	isgroup = (isgroup) ? 2 : 0;
 
 	long token = ++ctx->cnt;
-	fill_telegram_header(msg, QUERY_0x32_SIZE, token, 0x00, 0x32);
+	fill_telegram_header(msg, QUERY_0x32_SIZE, token, isgroup, 0x32);
 
-	msg_from_uint64(&msg[QUERY_0x32_NODEADR64_B0], node_adr);
+	msg_from_uint64(&msg[QUERY_0x32_NODEADR64_B0], adr);
 	msg[QUERY_0x32_ONOFF] = onoff;
 
 	n = ctx->socket_write_fn(ctx,msg, QUERY_0x32_SIZE);
@@ -644,7 +641,8 @@ LIGHTIFY_EXPORT int lightify_request_set_onoff(struct lightify_ctx *ctx, struct 
 		info(ctx,"short read %d!=%d\n", ANSWER_0x32_SIZE, n);
 		int i = 0;
 		while(n--) {
-		  info(ctx, " %d => %x\n ",i, msg[i++]);
+		  info(ctx, " %d => %x\n ",i, msg[i]);
+		  i++;
 		}
 		info(ctx, "\n");
 		return -EIO;
@@ -657,10 +655,10 @@ LIGHTIFY_EXPORT int lightify_request_set_onoff(struct lightify_ctx *ctx, struct 
 		return n;
 	}
 
-	/* check if the node adress was echoed properly */
-	node_adr2 = uint64_from_msg(&msg[ANSWER_0x32_NODEADR64_B0]);
-	if (node_adr != node_adr2) {
-		info(ctx, "unexected node mac adr %llx!=%llx", node_adr, node_adr2 );
+	/* check if the node address was echoed properly */
+	uint64_t adr2 = uint64_from_msg(&msg[ANSWER_0x32_NODEADR64_B0]);
+	if (adr != adr2) {
+		info(ctx, "unexected node mac / group adr %llx!=%llx", adr, adr2 );
 		return -EPROTO;
 	}
 
@@ -668,32 +666,18 @@ LIGHTIFY_EXPORT int lightify_request_set_onoff(struct lightify_ctx *ctx, struct 
 	if (n) {
 		info(ctx, "state %d indicates error.\n", n);
 	}
-
-	// Update node cache and if there was an error set stale status.
-	if (!node) {
-		while ((node=lightify_get_next_node(ctx,node))) {
-			lightify_node_set_onoff(node,onoff);
-			if (n) lightify_node_set_stale(node,1);
-		}
-	}
-	else {
-		lightify_node_set_onoff(node,onoff);
-		if (n) lightify_node_set_stale(node,1);
-	}
 	return n;
 }
 
-LIGHTIFY_EXPORT int lightify_request_set_cct(struct lightify_ctx *ctx, struct lightify_node *node, unsigned int cct, unsigned int fadetime) {
+static int lightify_request_set_cct(struct lightify_ctx *ctx, uint64_t adr, int isgroup, unsigned int cct, unsigned int fadetime) {
 	unsigned char msg[32];
 	int n;
 	if (!ctx) return -EINVAL;
-	if (!node)return -EINVAL;
-
-	uint64_t node_adr = lightify_node_get_nodeadr(node);
 
 	long token = ++ctx->cnt;
-	fill_telegram_header(msg, QUERY_0x33_SIZE, token, 0x00, 0x33);
-	msg_from_uint64(&msg[QUERY_0x33_NODEADR64_B0], node_adr);
+	isgroup = (isgroup) ? 2 : 0;
+	fill_telegram_header(msg, QUERY_0x33_SIZE, token, isgroup, 0x33);
+	msg_from_uint64(&msg[QUERY_0x33_NODEADR64_B0], adr);
 	msg[QUERY_0x33_CCT_LSB] = cct & 0xff;
 	msg[QUERY_0x33_CCT_MSB] = (cct >> 8 ) & 0xff;
 	msg[QUERY_0x33_FADETIME_LSB] = fadetime & 0xff;
@@ -728,29 +712,28 @@ LIGHTIFY_EXPORT int lightify_request_set_cct(struct lightify_ctx *ctx, struct li
 	}
 
 	/* check if the node address was echoed properly */
-	if (node_adr != uint64_from_msg(&msg[ANSWER_0x33_NODEADR64_B0])) return -EPROTO;
+	uint64_t adr2 = uint64_from_msg(&msg[ANSWER_0x33_NODEADR64_B0]);
+	if (adr != adr2) {
+		info(ctx, "unexected node mac / group adr %llx!=%llx", adr, adr2 );
+		return -EPROTO;
+	}
 
 	n = -decode_status(msg[ANSWER_0x33_STATE]);
-	lightify_node_set_cct(node, cct);
-	if (n) lightify_node_set_stale(node, 1);
-
 	return n;
 }
 
-LIGHTIFY_EXPORT int lightify_request_set_rgbw(struct lightify_ctx *ctx,
-		struct lightify_node *node, unsigned int r, unsigned int g,
+static int lightify_request_set_rgbw(struct lightify_ctx *ctx, uint64_t adr,
+		int isgroup, unsigned int r, unsigned int g,
 		unsigned int b,unsigned int w,unsigned int fadetime) {
 	unsigned char msg[32];
 	int n;
 	if (!ctx) return -EINVAL;
 	/* does not support broadcast. */
-	if (!node)return -EINVAL;
-
-	uint64_t node_adr = lightify_node_get_nodeadr(node);
 
 	long token = ++ctx->cnt;
-	fill_telegram_header(msg, QUERY_0x36_SIZE, token, 0x00, 0x36);
-	msg_from_uint64(&msg[QUERY_0x36_NODEADR64_B0], node_adr);
+	isgroup = (isgroup) ? 2 : 0;
+	fill_telegram_header(msg, QUERY_0x36_SIZE, token, isgroup, 0x36);
+	msg_from_uint64(&msg[QUERY_0x36_NODEADR64_B0], adr);
 	msg[QUERY_0x36_R] = r & 0xff;
 	msg[QUERY_0x36_G] = g & 0xff;
 	msg[QUERY_0x36_B] = b & 0xff;
@@ -782,33 +765,28 @@ LIGHTIFY_EXPORT int lightify_request_set_rgbw(struct lightify_ctx *ctx,
 		return n;
 	}
 
-	/* check if the node adress was echoed properly */
-	if (node_adr != uint64_from_msg(&msg[ANSWER_0x36_NODEADR64_B0])) return -EPROTO;
+	/* check if the node address was echoed properly */
+	uint64_t adr2 = uint64_from_msg(&msg[ANSWER_0x33_NODEADR64_B0]);
+	if (adr != adr2) {
+		info(ctx, "unexected node mac / group adr %llx!=%llx", adr, adr2 );
+		return -EPROTO;
+	}
 
 	n = -decode_status(msg[ANSWER_0x36_STATE]);
-
-	lightify_node_set_red(node, r);
-	lightify_node_set_green(node, g);
-	lightify_node_set_blue(node, b);
-	lightify_node_set_white(node, w);
-
-	if (n) lightify_node_set_stale(node, 1);
 	return n;
-
 }
 
-LIGHTIFY_EXPORT int lightify_request_set_brightness(struct lightify_ctx *ctx,
-		struct lightify_node *node, unsigned int level, unsigned int fadetime) {
+static int lightify_request_set_brightness(struct lightify_ctx *ctx, uint64_t adr,
+		int isgroup, unsigned int level, unsigned int fadetime) {
 	unsigned char msg[32];
 	int n;
 	if (!ctx) return -EINVAL;
-	if (!node)return -EINVAL;
-
-	uint64_t node_adr = lightify_node_get_nodeadr(node);
 
 	long token = ++ctx->cnt;
-	fill_telegram_header(msg, QUERY_0x31_SIZE, token, 0x00, 0x31);
-	msg_from_uint64(&msg[QUERY_0x31_NODEADR64_B0], node_adr);
+	isgroup = (isgroup) ? 2 : 0;
+
+	fill_telegram_header(msg, QUERY_0x31_SIZE, token, isgroup, 0x31);
+	msg_from_uint64(&msg[QUERY_0x31_NODEADR64_B0], adr);
 
 	msg[QUERY_0x31_LEVEL] = level & 0xff;
 	msg[QUERY_0x31_FADETIME_LSB] = fadetime & 0xff;
@@ -841,18 +819,75 @@ LIGHTIFY_EXPORT int lightify_request_set_brightness(struct lightify_ctx *ctx,
 		return n;
 	}
 
-	/* check if the node adress was echoed properly */
-	if (node_adr != uint64_from_msg(&msg[ANSWER_0x31_NODEADR64_B0])) return -EPROTO;
+	/* check if the node address was echoed properly */
+	uint64_t adr2 = uint64_from_msg(&msg[ANSWER_0x33_NODEADR64_B0]);
+	if (adr != adr2) {
+		info(ctx, "unexected node mac / group adr %llx!=%llx", adr, adr2 );
+		return -EPROTO;
+	}
 
 	n = -decode_status(msg[ANSWER_0x31_STATE]);
-
 	dbg(ctx, "unknown-bytes: %x %x %x\n", msg[ANSWER_0x31_UNKNOWN1],msg[ANSWER_0x31_UNKNOWN2],msg[ANSWER_0x31_UNKNOWN3]);
-
-	lightify_node_set_brightness(node, level);
-	lightify_node_set_onoff(node, level!=0); /* tweaking the level does that too */
-	if (n) lightify_node_set_stale(node, 1);
 	return n;
 }
+
+
+/* Node control */
+LIGHTIFY_EXPORT int lightify_request_node_set_onoff(struct lightify_ctx *ctx, struct lightify_node *node, int onoff) {
+	if (!ctx) return -EINVAL;
+	uint64_t adr = -1;
+	if (node) adr = lightify_node_get_nodeadr(node);
+
+	int ret = lightify_request_set_onoff(ctx, adr, 0, onoff);
+
+	lightify_node_set_onoff(node,onoff);
+	if (ret<0) {
+		lightify_node_set_stale(node,1);
+	}
+	return ret;
+}
+
+LIGHTIFY_EXPORT int lightify_request_node_set_cct(struct lightify_ctx *ctx, struct lightify_node *node, unsigned int cct, unsigned int fadetime) {
+	if (!ctx || !node ) return -EINVAL;
+	uint64_t adr = lightify_node_get_nodeadr(node);
+	int ret = lightify_request_set_cct(ctx, adr, 0 , cct, fadetime);
+
+	lightify_node_set_cct(node, cct);
+	if (ret<0) {
+		lightify_node_set_stale(node,1);
+	}
+	return ret;
+}
+
+LIGHTIFY_EXPORT int lightify_request_node_set_rgbw(struct lightify_ctx *ctx, struct lightify_node *node, unsigned int r, unsigned int g, unsigned int b,unsigned int w,unsigned int fadetime)
+{
+	if (!ctx || !node ) return -EINVAL;
+	uint64_t adr = lightify_node_get_nodeadr(node);
+	int ret = lightify_request_set_rgbw(ctx, adr, 0, r, g ,b ,w ,fadetime);
+
+	lightify_node_set_red(node, r);
+	lightify_node_set_green(node, g);
+	lightify_node_set_blue(node, b);
+	lightify_node_set_white(node, w);
+	if (ret<0) {
+		lightify_node_set_stale(node,1);
+	}
+	return ret;
+}
+
+LIGHTIFY_EXPORT int lightify_request_node_set_brightness(struct lightify_ctx *ctx, struct lightify_node *node, unsigned int level, unsigned int fadetime) {
+	if (!ctx || !node ) return -EINVAL;
+	uint64_t adr = lightify_node_get_nodeadr(node);
+	int ret = lightify_request_set_brightness(ctx, adr, 0, level, fadetime);
+
+	lightify_node_set_brightness(node, level);
+	if (ret<0) {
+		lightify_node_set_stale(node,1);
+	}
+	return ret;
+}
+
+
 
 LIGHTIFY_EXPORT int lightify_request_update_node(struct lightify_ctx *ctx,
 		struct lightify_node *node) {
