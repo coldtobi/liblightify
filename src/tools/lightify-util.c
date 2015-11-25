@@ -64,9 +64,10 @@ static struct option long_options[] = {
 { "on", required_argument, 0, '0' },
 { "off", required_argument, 0, '1' },
 { "time", required_argument, 0, 't' },
-{ "dump", no_argument, 0, 'd' },
+{ "list-nodes", no_argument, 0, 'd' },
 { "wait", required_argument, 0, 'w' },
-{ "groups", no_argument, 0, 'g' },
+{ "list-groups", no_argument, 0, 2},
+{ "group", required_argument, 0, 'g' },
 { 0, 0, 0, 0 }
 };
 /* getopt_long stores the option index here. */
@@ -81,14 +82,14 @@ int command_r_g = 0;
 int command_r_b = 0;
 int command_r_w = 0;
 
-int command_on = 0;
-
 int command_l = 0;
 int command_l_data = 0;
 
-int name = 0;
+//int name = 0;
 
 char *name_data = NULL;
+
+char *group_data = NULL;
 
 char *host_data = NULL;
 
@@ -104,88 +105,130 @@ void usage(char *argv[]) {
 	printf("Usage: %s [OPTIONS] \n", argv[0]);
 	printf("     --host,-h <host>    Hostname or IP\n");
 	printf("    [--verbose]          Verbose mode\n");
+	printf("    [--list-nodes,-d]          Dump info about lamps\n");
+	printf("    [--list-groups]       Show all known groups\n");
+	printf("    [--wait,-w <value>]  Wait for value/10 seconds\n");
+	printf("    [--time,-t <value>]  Set fading time  in 1/10 seconds\n");
 	printf("    [--name,-n <value>]  Name of the lamp to be manipulated\n");
+	printf("    [--group,-g <value>]  Name of the lamp to be manipulated\n");
 	printf("    [--port,-p <port>]   Port, default 4000\n");
-	printf("    [--dump,-d]          Dump info about lamps\n");
 	printf("    [--on,-0]            Turn lamp on\n");
 	printf("    [--off,-1]           Turn lamp off\n");
 	printf("    [--level,-l <value>] Set intensity level. Range 0 to 100\n");
 	printf("    [--cct,-c <value>]   CCT to be set.\n");
-	printf("    [--rgbw,-r <value>]  Set color. Give color as r,g,b,w. Color values from 0 to255\n");
-	printf("    [--wait,-w <value>]  Wait for value/10 seconds\n");
+	printf("    [--rgbw,-r <value>]  Set color. Give color as r,g,b,w. Color values from 0 to 255\n");
 	printf("\n Host must be given before any command. Commands on and off can broadcast to all lamps if name is not given before.\n");
 }
 
-void command_set_0_1(struct lightify_ctx *ctx) {
-	struct lightify_node *node;
-	if (command_on) {
-		command_on = command_on > 0 ? 1 : 0;
-		if (!name_data) {
-			lightify_request_node_set_onoff(ctx, 0, command_on);
-		} else {
-			node = NULL;
-			while ((node = lightify_get_next_node(ctx, node))) {
-				if (0 == strcmp(name_data, lightify_node_get_name(node))) {
-					if (verbose_flag) printf("node %s %s\n", lightify_node_get_name(node), command_on ? "on" : "off");
-					lightify_request_node_set_onoff(ctx, node, command_on);
-					break;
-				}
-			}
-			if (!node) {
-				printf("node %s not found\n", name_data);
-			}
+struct lightify_node* find_node_per_name(struct lightify_ctx *ctx, const char *name) {
+	if (!name) return NULL;
+	struct lightify_node *node = NULL;
+	while ((node = lightify_get_next_node(ctx, node))) {
+		if (0 == strcmp(name, lightify_node_get_name(node))) {
+			return node;
 		}
+	}
+	fprintf(stderr, "ERROR: Node %s not found\n", name);
+	return NULL;
+}
+
+struct lightify_group* find_grp_per_name(struct lightify_ctx *ctx, const char *name) {
+	if (!name) return NULL;
+	struct lightify_group *group = NULL;
+	while( (group = lightify_group_get_next_group(ctx, group))) {
+		if (0 == strcmp(name, lightify_group_get_name(group))) {
+			return group;
+		}
+	}
+	fprintf(stderr, "ERROR: Group %s not found\n", name);
+	return NULL;
+}
+
+
+void command_set_0_1(struct lightify_ctx *ctx, int command_on) {
+	struct lightify_node *node = find_node_per_name(ctx,name_data);;
+	struct lightify_group *grp = find_grp_per_name(ctx,group_data);
+	char *type, *name;
+
+	command_on = command_on > 0 ? 1 : 0;
+	if (!name_data && !group_data) {
+		type = "Broadcast"; name = "";
+		lightify_request_node_set_onoff(ctx, NULL, command_on);
+	} else if (node) {
+		type = "Node"; name = name_data;
+		lightify_request_node_set_onoff(ctx, node, command_on);
+	} else if (grp) {
+		type = "Group"; name = group_data;
+		lightify_request_group_set_onoff(ctx,grp,command_on);
+	} else {
+		return;
+	}
+
+	if (verbose_flag) {
+		printf("%s %s switch %s\n", type, name , command_on ? "on" : "off");
 	}
 }
 
 void command_set_cct(struct lightify_ctx *ctx) {
-	struct lightify_node *node;
-	node = NULL;
-	while ((node = lightify_get_next_node(ctx, node))) {
-		if (0 == strcmp(name_data, lightify_node_get_name(node))) {
-			if (verbose_flag) printf("node %s cct %d in time %d\n",
-					lightify_node_get_name(node), command_cct_data,
-					fadetime);
-			lightify_request_node_set_cct(ctx, node, command_cct_data, fadetime);
-			break;
-		}
+	struct lightify_node *node = find_node_per_name(ctx,name_data);;
+	struct lightify_group *grp = find_grp_per_name(ctx,group_data);
+	char *type, *name;
+
+	if(node) {
+		type = "Node"; name = name_data;
+		lightify_request_node_set_cct(ctx, node, command_cct_data, fadetime);
+	} else if (grp) {
+		type = "Group"; name = group_data;
+		lightify_request_group_set_cct(ctx, grp, command_cct_data, fadetime);
+	} else {
+		return;
 	}
-	if (!node) {
-		printf("node %s not found\n", name_data);
+
+	if (verbose_flag) {
+		printf("%s %s cct %dK in time %d\n", type, name, command_cct_data, fadetime );
 	}
 }
 
 void command_set_rgbw(struct lightify_ctx *ctx) {
-	struct lightify_node *node;
-	node = NULL;
-	while ((node = lightify_get_next_node(ctx, node))) {
-		if (0 == strcmp(name_data, lightify_node_get_name(node))) {
-			if (verbose_flag) printf("node %s rgbw %d,%d,%d,%d in time %d\n",
-					lightify_node_get_name(node), command_r_r,
-					command_r_g, command_r_b, command_r_w, fadetime);
-			lightify_request_node_set_rgbw(ctx, node, command_r_r,
-					command_r_g, command_r_b, command_r_w, fadetime);
-			break;
-		}
+	struct lightify_node *node = find_node_per_name(ctx,name_data);
+	struct lightify_group *grp = find_grp_per_name(ctx,group_data);
+	char *type, *name;
+
+	if(node) {
+		type ="Node"; name = name_data;
+		lightify_request_node_set_rgbw(ctx, node, command_r_r, command_r_g,
+				command_r_b, command_r_w, fadetime);
+	} else if (grp) {
+		type ="Group"; name = group_data;
+		lightify_request_group_set_rgbw(ctx, grp, command_r_r, command_r_g,
+				command_r_b, command_r_w, fadetime);
+	} else {
+		return;
 	}
-	if (!node) {
-		printf("node %s not found\n", name_data);
+
+	if (verbose_flag) {
+		printf("%s %s rgbw %d,%d,%d,%d in time %d\n", type, name, command_r_r,
+				command_r_g, command_r_b, command_r_w, fadetime);
 	}
 }
 
 void command_set_lvl(struct lightify_ctx *ctx) {
-	struct lightify_node *node;
-	node = NULL;
-	while ((node = lightify_get_next_node(ctx, node))) {
-		if (0 == strcmp(name_data, lightify_node_get_name(node))) {
-			if (verbose_flag) printf("node %s rgbw brightness %d in time %d\n",
-					lightify_node_get_name(node), command_l_data , fadetime);
-			lightify_request_node_set_brightness(ctx, node, command_l_data, fadetime);
-			break;
-		}
+	struct lightify_node *node = find_node_per_name(ctx,name_data);
+	struct lightify_group *grp = find_grp_per_name(ctx,group_data);
+	char *type, *name;
+
+	if(node) {
+		type ="Node"; name = name_data;
+		lightify_request_node_set_brightness(ctx, node, command_l_data, fadetime);
+	} else if (grp) {
+		type ="Group"; name = group_data;
+		lightify_request_group_set_brightness(ctx, grp, command_l_data, fadetime);
+	} else {
+		return;
 	}
-	if (!node) {
-		printf("node %s not found\n", name_data);
+
+	if (verbose_flag) {
+		printf("%s %s brightness %d in time %d\n", type, name, command_l_data, fadetime);
 	}
 }
 
@@ -231,9 +274,15 @@ void setup_connection(struct lightify_ctx *ctx) {
 	err = lightify_scan_nodes(ctx);
 	if (err < 0) {
 		fprintf(stderr,
-				"Error during scan -- lets see if we've got partial data\n");
+				"Error during node scan -- lets see if we've got partial data\n");
 	}
 
+	// scan groups
+	err = lightify_request_scan_groups(ctx);
+	if (err < 0) {
+		fprintf(stderr,
+				"Error during group scan -- lets see if we've got partial group data\n");
+	}
 }
 
 
@@ -282,14 +331,14 @@ void dump_nodes_state(struct lightify_ctx *ctx) {
 	int count=0;
 	// Let's create a short table...
 	//      1234567890123456  1234567812345678
-	printf("|-----------------|------------------|---------|-------|---------|-----|-----|------|-----|-----|-----|-----|---|\n");
-	printf("| Name            | MAC              | type    | group | online  | 0/1 | dim | CCT  | Red | Grn | Blu | Wht | s |\n");
-	printf("|-----------------|------------------|---------|-------|---------|-----|-----|------|-----|-----|-----|-----|---|\n");
+	printf("|------------------|------------------|---------|-------|---------|-----|-----|------|-----|-----|-----|-----|---|\n");
+	printf("| Name             | MAC              | type    | group | online  | 0/1 | dim | CCT  | Red | Grn | Blu | Wht | s |\n");
+	printf("|------------------|------------------|---------|-------|---------|-----|-----|------|-----|-----|-----|-----|---|\n");
 	struct lightify_node *node = NULL;
 
 	while (( node  = lightify_get_next_node(ctx, node))) {
 		count++;
-		printf("|%-16s |" , lightify_node_get_name(node));
+		printf("| %-16s |" , lightify_node_get_name(node));
 		printf(" %016llx |" , lightify_node_get_nodeadr(node));
 		printf(" %-7s |", decode_lamptype(lightify_node_get_lamptype(node)));
 		printf(" %-5d |", lightify_node_get_grpadr(node));
@@ -307,23 +356,20 @@ void dump_nodes_state(struct lightify_ctx *ctx) {
 	if (!count) {
 		printf("no nodes found\n");
 	}
-	printf("|-----------------|------------------|---------|-------|---------|-----|-----|------|-----|-----|-----|-----|---|\n");
+	printf("|------------------|------------------|---------|-------|---------|-----|-----|------|-----|-----|-----|-----|---|\n");
 }
 
 void dump_groups(struct lightify_ctx *ctx) {
 
-	int i = lightify_request_scan_groups(ctx);
-	printf("Scan groups: Result %d\n", i);
-
-	if (i > 0) {
-		struct lightify_group *group = NULL;
-		printf("| Group Name       | id     |\n");
-		printf("|------------------|--------|\n");
-		while ((group = lightify_group_get_next_group(ctx,group))) {
-			printf("| %-16s | 0x%04x |\n", lightify_group_get_name(group), lightify_group_get_id(group));
-		}
-		printf("|------------------|--------|\n");
+	struct lightify_group *group = NULL;
+	printf("|------------------|--------|\n");
+	printf("| Group Name       | id     |\n");
+	printf("|------------------|--------|\n");
+	while ((group = lightify_group_get_next_group(ctx,group))) {
+		printf("| %-16s | 0x%04x |\n", lightify_group_get_name(group), lightify_group_get_id(group));
 	}
+	printf("|------------------|--------|\n");
+
 }
 
 
@@ -344,7 +390,7 @@ int main(int argc, char *argv[]) {
 
 
 	while (1) {
-		c = getopt_long(argc, argv, "dc:r:l:n:h:p:01t:w:", long_options,
+		c = getopt_long(argc, argv, "dc:r:l:n:h:p:01t:w:g:", long_options,
 				&option_index);
 		if (c == -1)
 			break;
@@ -352,26 +398,19 @@ int main(int argc, char *argv[]) {
 		switch (c) {
 
 		case '0':
-			if (!host_data) {
-				exit(1);
-			}
+			if (!host_data) { usage(argv); exit(1); }
 			if (!gonnected) setup_connection(ctx);
-			command_on = -1;
-			command_set_0_1(ctx);
+			command_set_0_1(ctx,0);
 			break;
 
 		case '1':
-			if (!host_data) {
-				usage(argv);
-				exit(1);
-			}
+			if (!host_data) { usage(argv); exit(1); }
 			if (!gonnected) setup_connection(ctx);
-			command_on = 1;
-			command_set_0_1(ctx);
+			command_set_0_1(ctx,1);
 			break;
 
 		case 'c':
-			if (!host_data || !name) {
+			if (!host_data || (!name_data && !group_data) ) {
 				usage(argv);
 				exit(1);
 			}
@@ -382,7 +421,7 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'r':
-			if (!host_data || !name) {
+			if (!host_data || (!name_data && !group_data)) {
 				usage(argv);
 				exit(1);
 			}
@@ -394,7 +433,7 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'l':
-			if (!host_data || !name) {
+			if (!host_data || (!name_data && !group_data)) {
 				usage(argv);
 				exit(1);
 			}
@@ -405,8 +444,8 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'n':
-			name = 1;
 			name_data = optarg;
+			group_data = NULL;
 			break;
 
 		case 'h':
@@ -443,13 +482,26 @@ int main(int argc, char *argv[]) {
 		}
 		break;
 
-		case 'g': {
+		case 2: {
 			if (!gonnected) setup_connection(ctx);
 			dump_groups(ctx);
 			break;
 		}
 
+		case 'g': {
+			if (!gonnected) setup_connection(ctx);
+			group_data = optarg;
+			name_data = NULL;
+			break;
+		}
+
+		case 0:
+			break;
+		case 1:
+			break;
+
 		default:
+			//printf("unknown option %c %d", c, c);
 			usage(argv);
 			exit(1);
 		}
