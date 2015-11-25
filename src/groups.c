@@ -39,25 +39,22 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /** \file groups.c
  *
  * Group support.
- *
- * Heavily Work in Progess - do not assume API stability!
- *
  */
 
-
+/** Group structure
+*/
 struct lightify_group {
-	struct lightify_ctx *ctx;
+	struct lightify_ctx *ctx;  /**< library context */
 
-	// Linked list
-    struct lightify_group *next;
-	struct lightify_group *prev;
+	/* Linked list */
+    struct lightify_group *next; /**< linked list, next entry */
+	struct lightify_group *prev;  /**< linked list, previous entry */
 
-	/** Group ID */
+	/** Group ID  */
 	int id;
 
-	/** Group name*/
+	/** Group name */
 	char *name;
-
 };
 
 int lightify_group_new(struct lightify_ctx *ctx, struct lightify_group **newgroup) {
@@ -99,13 +96,11 @@ int lightify_group_remove(struct lightify_group *grp) {
 	if (next) next->prev = prev;
 
 	if (grp->name) free(grp->name);
-
 	free(grp);
-
 	return 0;
 }
 
-int lightify_group_set_name(struct lightify_group *grp, unsigned char *name) {
+int lightify_group_set_name(struct lightify_group *grp, const unsigned char *name) {
 	if (!grp || !name) {
 		return -EINVAL;
 	}

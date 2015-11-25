@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 /*
- * groups.h
+ * \file groups.h
  *
  *  Created on: 18.11.2015
  *      Author: tobi
@@ -41,12 +41,38 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.h"
 #endif
 
+/** Generate a new group object
+ *
+ * @param ctx  Library context
+ * @param newgroup where to store new pointer of new group
+ * @return negative on error. >=0 is success.
+ */
 int lightify_group_new(struct lightify_ctx *ctx, struct lightify_group **newgroup);
 
-int lightify_group_set_name(struct lightify_group *grp, unsigned char *name);
+/** Set Group's name
+ *
+ * @param grp to operate on
+ * @param name to set
+ * @return negative on error. >=0 is success.
+ *
+ * \note a maximum lenght of 16 chars is enforced.
+ * \note a copy of the name is allocated and stored.
+ */
+int lightify_group_set_name(struct lightify_group *grp, const unsigned char *name);
 
+/** Set Group's ID
+ *
+ * @param grp to operate on
+ * @param id to set
+ * @return negative on error. >=0 is success.
+ */
 int lightify_group_set_id(struct lightify_group *grp, int id);
 
+/** Remove group from linked list and free memory associated.
+ *
+ * @param grp to operate on
+ * @return negative on error. >=0 is success.
+ */
 int lightify_group_remove(struct lightify_group *grp);
 
 #endif /* SRC_GROUPS_H_ */
