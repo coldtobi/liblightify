@@ -140,6 +140,12 @@ LIGHTIFY_EXPORT struct lightify_group *lightify_group_get_next(struct lightify_c
 	return current->next;
 }
 
+LIGHTIFY_EXPORT struct lightify_group *lightify_group_get_previous(struct lightify_ctx *ctx, struct lightify_group *current) {
+	if (!ctx) return NULL;
+	if (!current) return NULL;
+	return current->prev;
+}
+
 // #FIXME export and document
 LIGHTIFY_EXPORT struct lightify_node *lightify_group_get_next_node(struct lightify_group *grp, struct lightify_node *lastnode) {
 	if (!grp) return NULL;

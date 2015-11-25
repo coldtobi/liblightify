@@ -38,6 +38,7 @@ global:
 	lightify_node_request_brightness;
 	lightify_node_request_update;
 	lightify_group_get_next;
+	lightify_group_get_previous;
 	lightify_group_get_name;
     lightify_group_get_id;
     lightify_group_get_next_node;

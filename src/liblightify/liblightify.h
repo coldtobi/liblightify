@@ -428,6 +428,13 @@ struct lightify_group;
  */
 struct lightify_group *lightify_group_get_next(struct lightify_ctx *ctx, struct lightify_group *current);
 
+/** Get previous known group
+ *
+ * @param ctx context
+ * @param current last group queried
+ * @return previous group in list or NULL if there isn't
+ */
+struct lightify_group *lightify_group_get_previous(struct lightify_ctx *ctx, struct lightify_group *current);
 
 /** Get the name associated with the group
  *

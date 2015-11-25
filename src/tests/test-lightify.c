@@ -254,6 +254,8 @@ START_TEST(lightify_context_base_NULL_checks)
 		printf("now testing context::groups\n");
 		ck_assert_int_eq(lightify_group_request_scan(NULL), -EINVAL);
 		ck_assert_ptr_eq(lightify_group_get_next(NULL,NULL), NULL);
+		ck_assert_ptr_eq(lightify_group_get_previous(NULL,(struct lightify_group*)1), NULL);
+		ck_assert_ptr_eq(lightify_group_get_previous((struct lightify_ctx*)1,NULL), NULL);
 		ck_assert_int_eq(lightify_group_get_id(NULL), -EINVAL);
 		ck_assert_ptr_eq(lightify_group_get_name(NULL), NULL);
 
