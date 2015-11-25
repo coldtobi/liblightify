@@ -153,7 +153,7 @@ public:
 
 	/** Turn on / off */
 	int TurnOnOff(bool onoff) {
-		return lightify_request_node_set_onoff(_ctx, _node, onoff);
+		return lightify_node_request_onoff(_ctx, _node, onoff);
 	}
 
 	/** Set color temperature
@@ -164,7 +164,7 @@ public:
 	 *  \returns negative on error
 	 */
 	int SetCCT(int cct, int time) {
-		return lightify_request_node_set_cct(_ctx, _node, cct, time);
+		return lightify_node_request_cct(_ctx, _node, cct, time);
 	}
 
 	/** Set color components
@@ -182,7 +182,7 @@ public:
 	 * \returns negative on error
 	 * */
 	int SetRGBW(int red, int green, int blue, int white, int time) {
-		return lightify_request_node_set_rgbw(_ctx,_node, red, green, blue, white, time);
+		return lightify_node_request_rgbw(_ctx,_node, red, green, blue, white, time);
 	}
 
 	/** Set brightness
@@ -193,7 +193,7 @@ public:
 	 *  \returns negative on error
 	 * */
 	int SetBrightness(int level, int time) {
-		return lightify_request_node_set_brightness(_ctx, _node, level, time);
+		return lightify_node_request_brightness(_ctx, _node, level, time);
 	}
 
 	/** Query updated node information from the gateway
@@ -205,7 +205,7 @@ public:
 	 * \sa lightify_request_update_node()
 	 */
 	int UpdateNodeInfo(void) {
-		return lightify_request_update_node(_ctx, _node);
+		return lightify_node_request_update(_ctx, _node);
 	}
 
 
@@ -320,14 +320,14 @@ err_out:
 
 		if (_sockfd == -1) return -EBADF;
 		_free_nodemap();
-		err = lightify_scan_nodes(_ctx);
+		err = lightify_node_request_scan(_ctx);
 		if (err < 0) return err;
 
 #ifdef LIGHTIFY_CPP_FOR_ANDROID
 		struct lean_nodemap *last_inserted = NULL;
 #endif
 		struct lightify_node *node = NULL;
-		while(node = lightify_get_next_node(_ctx,node)) {
+		while(node = lightify_node_get_next(_ctx,node)) {
 			count++;
 #ifndef LIGHTIFY_CPP_FOR_ANDROID
 			_nodesmap.insert(std::pair<unsigned long long, Lightify_Node*>(
@@ -362,7 +362,7 @@ err_out:
 	/** Actions that can be broadcasted. */
 	int TurnAllOnOff(bool onoff)
 	{
-		return lightify_request_node_set_onoff(_ctx,NULL,onoff);
+		return lightify_node_request_onoff(_ctx,NULL,onoff);
 	}
 
 	/** Get the node object for a given MAC address */

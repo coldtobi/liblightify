@@ -294,7 +294,7 @@ static int decode_status(unsigned char code) {
  * @param mac  64bit mac adress
  * @return pointer to node or NULL.
  */
-LIGHTIFY_EXPORT struct lightify_node *lightify_get_nodefrommac(struct lightify_ctx *ctx, uint64_t mac) {
+LIGHTIFY_EXPORT struct lightify_node *lightify_node_get_from_mac(struct lightify_ctx *ctx, uint64_t mac) {
 	if (!ctx) return NULL;
 
 	struct lightify_node *ret = ctx->nodes;
@@ -382,7 +382,7 @@ static int check_header_response(unsigned char *msg, unsigned long token,
 	return 0;
 }
 
-LIGHTIFY_EXPORT struct lightify_node* lightify_get_next_node(struct lightify_ctx *ctx,
+LIGHTIFY_EXPORT struct lightify_node* lightify_node_get_next(struct lightify_ctx *ctx,
 		struct lightify_node *node ) {
 
 	if(!ctx) return NULL;
@@ -390,7 +390,7 @@ LIGHTIFY_EXPORT struct lightify_node* lightify_get_next_node(struct lightify_ctx
 	return ctx->nodes;
 }
 
-LIGHTIFY_EXPORT struct lightify_node* lightify_get_prev_node(struct lightify_ctx *ctx,
+LIGHTIFY_EXPORT struct lightify_node* lightify_node_get_previous(struct lightify_ctx *ctx,
 		struct lightify_node *node )
 {
 	if(!ctx) return NULL;
@@ -469,7 +469,7 @@ LIGHTIFY_EXPORT int lightify_free(struct lightify_ctx *ctx) {
 	return 0;
 }
 
-LIGHTIFY_EXPORT int lightify_scan_nodes(struct lightify_ctx *ctx) {
+LIGHTIFY_EXPORT int lightify_node_request_scan(struct lightify_ctx *ctx) {
 	int ret;
 	int n,m;
 	int no_of_nodes;
@@ -480,7 +480,7 @@ LIGHTIFY_EXPORT int lightify_scan_nodes(struct lightify_ctx *ctx) {
 
 	/* remove old node information */
 	struct lightify_node *node = ctx->nodes;
-	while ( (node = lightify_get_next_node(ctx, NULL))) {
+	while ( (node = lightify_node_get_next(ctx, NULL))) {
 		dbg(ctx, "freeing node %p.\n", node);
 		lightify_node_remove(node);
 	}
@@ -833,7 +833,7 @@ static int lightify_request_set_brightness(struct lightify_ctx *ctx, uint64_t ad
 
 
 /* Node control */
-LIGHTIFY_EXPORT int lightify_request_node_set_onoff(struct lightify_ctx *ctx, struct lightify_node *node, int onoff) {
+LIGHTIFY_EXPORT int lightify_node_request_onoff(struct lightify_ctx *ctx, struct lightify_node *node, int onoff) {
 	if (!ctx) return -EINVAL;
 	uint64_t adr = -1;
 	if (node) adr = lightify_node_get_nodeadr(node);
@@ -847,7 +847,7 @@ LIGHTIFY_EXPORT int lightify_request_node_set_onoff(struct lightify_ctx *ctx, st
 	return ret;
 }
 
-LIGHTIFY_EXPORT int lightify_request_node_set_cct(struct lightify_ctx *ctx, struct lightify_node *node, unsigned int cct, unsigned int fadetime) {
+LIGHTIFY_EXPORT int lightify_node_request_cct(struct lightify_ctx *ctx, struct lightify_node *node, unsigned int cct, unsigned int fadetime) {
 	if (!ctx || !node ) return -EINVAL;
 	uint64_t adr = lightify_node_get_nodeadr(node);
 	int ret = lightify_request_set_cct(ctx, adr, 0 , cct, fadetime);
@@ -859,7 +859,7 @@ LIGHTIFY_EXPORT int lightify_request_node_set_cct(struct lightify_ctx *ctx, stru
 	return ret;
 }
 
-LIGHTIFY_EXPORT int lightify_request_node_set_rgbw(struct lightify_ctx *ctx, struct lightify_node *node, unsigned int r, unsigned int g, unsigned int b,unsigned int w,unsigned int fadetime)
+LIGHTIFY_EXPORT int lightify_node_request_rgbw(struct lightify_ctx *ctx, struct lightify_node *node, unsigned int r, unsigned int g, unsigned int b,unsigned int w,unsigned int fadetime)
 {
 	if (!ctx || !node ) return -EINVAL;
 	uint64_t adr = lightify_node_get_nodeadr(node);
@@ -875,7 +875,7 @@ LIGHTIFY_EXPORT int lightify_request_node_set_rgbw(struct lightify_ctx *ctx, str
 	return ret;
 }
 
-LIGHTIFY_EXPORT int lightify_request_node_set_brightness(struct lightify_ctx *ctx, struct lightify_node *node, unsigned int level, unsigned int fadetime) {
+LIGHTIFY_EXPORT int lightify_node_request_brightness(struct lightify_ctx *ctx, struct lightify_node *node, unsigned int level, unsigned int fadetime) {
 	if (!ctx || !node ) return -EINVAL;
 	uint64_t adr = lightify_node_get_nodeadr(node);
 	int ret = lightify_request_set_brightness(ctx, adr, 0, level, fadetime);
@@ -889,7 +889,7 @@ LIGHTIFY_EXPORT int lightify_request_node_set_brightness(struct lightify_ctx *ct
 
 
 
-LIGHTIFY_EXPORT int lightify_request_update_node(struct lightify_ctx *ctx,
+LIGHTIFY_EXPORT int lightify_node_request_update(struct lightify_ctx *ctx,
 		struct lightify_node *node) {
 	unsigned char msg[32];
 	int n;
@@ -948,7 +948,7 @@ LIGHTIFY_EXPORT int lightify_request_update_node(struct lightify_ctx *ctx,
 }
 
 // FIXME export in lightify.h and *,sym
-LIGHTIFY_EXPORT int lightify_request_scan_groups(struct lightify_ctx *ctx) {
+LIGHTIFY_EXPORT int lightify_group_request_scan(struct lightify_ctx *ctx) {
 	int n,m;
 	int no_of_grps;
 	long token;
@@ -959,7 +959,7 @@ LIGHTIFY_EXPORT int lightify_request_scan_groups(struct lightify_ctx *ctx) {
 
 	/* remove old group information */
 	struct lightify_group *group = ctx->groups;
-	while ( (group = lightify_group_get_next_group(ctx, NULL))) {
+	while ( (group = lightify_group_get_next(ctx, NULL))) {
 		dbg(ctx, "freeing group %p.\n", group);
 		lightify_group_remove(group);
 	}
@@ -1042,33 +1042,33 @@ LIGHTIFY_EXPORT int lightify_request_scan_groups(struct lightify_ctx *ctx) {
 
 
 /* Group control */
-LIGHTIFY_EXPORT int lightify_request_group_set_onoff(struct lightify_ctx *ctx, struct lightify_group *group, int onoff) {
+LIGHTIFY_EXPORT int lightify_group_request_onoff(struct lightify_ctx *ctx, struct lightify_group *group, int onoff) {
 	if (!ctx || !group) return -EINVAL;
 
 	int ret = lightify_request_set_onoff(ctx, lightify_group_get_id(group), 1, onoff);
 
 	struct lightify_node *node = NULL;
-	while  ( (node = lightify_group_get_next_node_in_group(group,node))) {
+	while  ( (node = lightify_group_get_next_node(group,node))) {
 		lightify_node_set_onoff(node, onoff);
 		if (ret < 0 ) lightify_node_set_stale(node, 1);
 	}
 	return ret;
 }
 
-LIGHTIFY_EXPORT int lightify_request_group_set_cct(struct lightify_ctx *ctx, struct lightify_group *group, unsigned int cct, unsigned int fadetime) {
+LIGHTIFY_EXPORT int lightify_group_request_cct(struct lightify_ctx *ctx, struct lightify_group *group, unsigned int cct, unsigned int fadetime) {
 	if (!ctx || !group) return -EINVAL;
 
 	int ret = lightify_request_set_cct(ctx, lightify_group_get_id(group), 1, cct, fadetime);
 
 	struct lightify_node *node = NULL;
-	while  ( (node = lightify_group_get_next_node_in_group(group,node))) {
+	while  ( (node = lightify_group_get_next_node(group,node))) {
 		lightify_node_set_cct(node, cct);
 		if (ret < 0 ) lightify_node_set_stale(node, 1);
 	}
 	return ret;
 }
 
-LIGHTIFY_EXPORT int lightify_request_group_set_rgbw(struct lightify_ctx *ctx,
+LIGHTIFY_EXPORT int lightify_group_request_rgbw(struct lightify_ctx *ctx,
 		struct lightify_group *group, unsigned int r, unsigned int g,
 		unsigned int b,unsigned int w,unsigned int fadetime) {
 	if (!ctx || !group) return -EINVAL;
@@ -1076,7 +1076,7 @@ LIGHTIFY_EXPORT int lightify_request_group_set_rgbw(struct lightify_ctx *ctx,
 	int ret = lightify_request_set_rgbw(ctx, lightify_group_get_id(group), 1, r, g, b, w , fadetime);
 
 	struct lightify_node *node = NULL;
-	while  ( (node = lightify_group_get_next_node_in_group(group,node))) {
+	while  ( (node = lightify_group_get_next_node(group,node))) {
 		lightify_node_set_red(node, r);
 		lightify_node_set_green(node, g);
 		lightify_node_set_blue(node, b);
@@ -1086,14 +1086,14 @@ LIGHTIFY_EXPORT int lightify_request_group_set_rgbw(struct lightify_ctx *ctx,
 	return ret;
 }
 
-LIGHTIFY_EXPORT int lightify_request_group_set_brightness(struct lightify_ctx *ctx,
+LIGHTIFY_EXPORT int lightify_group_request_brightness(struct lightify_ctx *ctx,
 		struct lightify_group *group, unsigned int level, unsigned int fadetime) {
 	if (!ctx || !group) return -EINVAL;
 
 	int ret = lightify_request_set_brightness(ctx, lightify_group_get_id(group), 1, level , fadetime);
 
 	struct lightify_node *node = NULL;
-	while  ( (node = lightify_group_get_next_node_in_group(group,node))) {
+	while  ( (node = lightify_group_get_next_node(group,node))) {
 		lightify_node_set_brightness(node, level);
 		if (ret < 0 ) lightify_node_set_stale(node, 1);
 	}

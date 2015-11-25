@@ -134,18 +134,18 @@ LIGHTIFY_EXPORT int lightify_group_get_id(struct lightify_group *grp) {
 }
 
 // #FIXME export and document
-LIGHTIFY_EXPORT struct lightify_group *lightify_group_get_next_group(struct lightify_ctx *ctx, struct lightify_group *current) {
+LIGHTIFY_EXPORT struct lightify_group *lightify_group_get_next(struct lightify_ctx *ctx, struct lightify_group *current) {
 	if (!ctx) return NULL;
 	if (!current) return ctx->groups;
 	return current->next;
 }
 
 // #FIXME export and document
-LIGHTIFY_EXPORT struct lightify_node *lightify_group_get_next_node_in_group(struct lightify_group *grp, struct lightify_node *lastnode) {
+LIGHTIFY_EXPORT struct lightify_node *lightify_group_get_next_node(struct lightify_group *grp, struct lightify_node *lastnode) {
 	if (!grp) return NULL;
 	uint16_t grpmask = 1 << (grp->id);
 
-	while ( lastnode = lightify_get_next_node(grp->ctx, lastnode)) {
+	while ( (lastnode = lightify_node_get_next(grp->ctx, lastnode))) {
 		if ( grpmask & lightify_node_get_grpadr(lastnode)) return lastnode;
 	}
 	return NULL;

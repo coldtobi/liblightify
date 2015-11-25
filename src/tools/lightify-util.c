@@ -123,7 +123,7 @@ void usage(char *argv[]) {
 struct lightify_node* find_node_per_name(struct lightify_ctx *ctx, const char *name) {
 	if (!name) return NULL;
 	struct lightify_node *node = NULL;
-	while ((node = lightify_get_next_node(ctx, node))) {
+	while ((node = lightify_node_get_next(ctx, node))) {
 		if (0 == strcmp(name, lightify_node_get_name(node))) {
 			return node;
 		}
@@ -135,7 +135,7 @@ struct lightify_node* find_node_per_name(struct lightify_ctx *ctx, const char *n
 struct lightify_group* find_grp_per_name(struct lightify_ctx *ctx, const char *name) {
 	if (!name) return NULL;
 	struct lightify_group *group = NULL;
-	while( (group = lightify_group_get_next_group(ctx, group))) {
+	while( (group = lightify_group_get_next(ctx, group))) {
 		if (0 == strcmp(name, lightify_group_get_name(group))) {
 			return group;
 		}
@@ -153,13 +153,13 @@ void command_set_0_1(struct lightify_ctx *ctx, int command_on) {
 	command_on = command_on > 0 ? 1 : 0;
 	if (!name_data && !group_data) {
 		type = "Broadcast"; name = "";
-		lightify_request_node_set_onoff(ctx, NULL, command_on);
+		lightify_node_request_onoff(ctx, NULL, command_on);
 	} else if (node) {
 		type = "Node"; name = name_data;
-		lightify_request_node_set_onoff(ctx, node, command_on);
+		lightify_node_request_onoff(ctx, node, command_on);
 	} else if (grp) {
 		type = "Group"; name = group_data;
-		lightify_request_group_set_onoff(ctx,grp,command_on);
+		lightify_group_request_onoff(ctx,grp,command_on);
 	} else {
 		return;
 	}
@@ -176,10 +176,10 @@ void command_set_cct(struct lightify_ctx *ctx) {
 
 	if(node) {
 		type = "Node"; name = name_data;
-		lightify_request_node_set_cct(ctx, node, command_cct_data, fadetime);
+		lightify_node_request_cct(ctx, node, command_cct_data, fadetime);
 	} else if (grp) {
 		type = "Group"; name = group_data;
-		lightify_request_group_set_cct(ctx, grp, command_cct_data, fadetime);
+		lightify_group_request_cct(ctx, grp, command_cct_data, fadetime);
 	} else {
 		return;
 	}
@@ -196,11 +196,11 @@ void command_set_rgbw(struct lightify_ctx *ctx) {
 
 	if(node) {
 		type ="Node"; name = name_data;
-		lightify_request_node_set_rgbw(ctx, node, command_r_r, command_r_g,
+		lightify_node_request_rgbw(ctx, node, command_r_r, command_r_g,
 				command_r_b, command_r_w, fadetime);
 	} else if (grp) {
 		type ="Group"; name = group_data;
-		lightify_request_group_set_rgbw(ctx, grp, command_r_r, command_r_g,
+		lightify_group_request_rgbw(ctx, grp, command_r_r, command_r_g,
 				command_r_b, command_r_w, fadetime);
 	} else {
 		return;
@@ -219,10 +219,10 @@ void command_set_lvl(struct lightify_ctx *ctx) {
 
 	if(node) {
 		type ="Node"; name = name_data;
-		lightify_request_node_set_brightness(ctx, node, command_l_data, fadetime);
+		lightify_node_request_brightness(ctx, node, command_l_data, fadetime);
 	} else if (grp) {
 		type ="Group"; name = group_data;
-		lightify_request_group_set_brightness(ctx, grp, command_l_data, fadetime);
+		lightify_group_request_brightness(ctx, grp, command_l_data, fadetime);
 	} else {
 		return;
 	}
@@ -271,14 +271,14 @@ void setup_connection(struct lightify_ctx *ctx) {
 	gonnected = 1;
 
 	// scan nodes
-	err = lightify_scan_nodes(ctx);
+	err = lightify_node_request_scan(ctx);
 	if (err < 0) {
 		fprintf(stderr,
 				"Error during node scan -- lets see if we've got partial data\n");
 	}
 
 	// scan groups
-	err = lightify_request_scan_groups(ctx);
+	err = lightify_group_request_scan(ctx);
 	if (err < 0) {
 		fprintf(stderr,
 				"Error during group scan -- lets see if we've got partial group data\n");
@@ -336,7 +336,7 @@ void dump_nodes_state(struct lightify_ctx *ctx) {
 	printf("|------------------|------------------|---------|-------|---------|-----|-----|------|-----|-----|-----|-----|---|\n");
 	struct lightify_node *node = NULL;
 
-	while (( node  = lightify_get_next_node(ctx, node))) {
+	while (( node  = lightify_node_get_next(ctx, node))) {
 		count++;
 		printf("| %-16s |" , lightify_node_get_name(node));
 		printf(" %016llx |" , lightify_node_get_nodeadr(node));
@@ -365,7 +365,7 @@ void dump_groups(struct lightify_ctx *ctx) {
 	printf("|------------------|--------|\n");
 	printf("| Group Name       | id     |\n");
 	printf("|------------------|--------|\n");
-	while ((group = lightify_group_get_next_group(ctx,group))) {
+	while ((group = lightify_group_get_next(ctx,group))) {
 		printf("| %-16s | 0x%04x |\n", lightify_group_get_name(group), lightify_group_get_id(group));
 	}
 	printf("|------------------|--------|\n");

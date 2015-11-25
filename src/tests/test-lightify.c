@@ -249,11 +249,11 @@ START_TEST(lightify_context_base_NULL_checks)
 		ck_assert_int_eq(lightify_free(NULL), -EINVAL);
 
 		printf("now testing context::nodes\n");
-		ck_assert_ptr_eq(lightify_get_next_node(NULL,NULL), NULL);
+		ck_assert_ptr_eq(lightify_node_get_next(NULL,NULL), NULL);
 
 		printf("now testing context::groups\n");
-		ck_assert_int_eq(lightify_request_scan_groups(NULL), -EINVAL);
-		ck_assert_ptr_eq(lightify_group_get_next_group(NULL,NULL), NULL);
+		ck_assert_int_eq(lightify_group_request_scan(NULL), -EINVAL);
+		ck_assert_ptr_eq(lightify_group_get_next(NULL,NULL), NULL);
 		ck_assert_int_eq(lightify_group_get_id(NULL), -EINVAL);
 		ck_assert_ptr_eq(lightify_group_get_name(NULL), NULL);
 
@@ -396,7 +396,7 @@ START_TEST(lightify_tst_scan_nodes)
 		err = lightify_set_userdata(_ctx, mfs);
 		ck_assert_int_eq(err, 0);
 
-		err = lightify_scan_nodes(_ctx);
+		err = lightify_node_request_scan(_ctx);
 		ck_assert_int_eq(err, 1);
 
 		ck_assert_int_eq(mfs->size_write, sizeof(scanfornodes_query));
@@ -406,10 +406,10 @@ START_TEST(lightify_tst_scan_nodes)
 		// check if we can access the node
 		struct lightify_node *node, *node2;
 
-		node = lightify_get_next_node(_ctx, NULL);
+		node = lightify_node_get_next(_ctx, NULL);
 		ck_assert_ptr_ne(node, NULL);
 
-		node2 = lightify_get_next_node(_ctx, node);
+		node2 = lightify_node_get_next(_ctx, node);
 		ck_assert_ptr_eq(node2, NULL);
 
 		// check if we can get the name
@@ -426,11 +426,11 @@ START_TEST(lightify_tst_scan_nodes)
 		ck_assert(mac == 0xdeadbeef12345678);
 
 		// check that we can search via MAC.
-		node2 = lightify_get_nodefrommac(_ctx, mac);
+		node2 = lightify_node_get_from_mac(_ctx, mac);
 		ck_assert_ptr_eq(node,node2);
 
 		// check that we won't get a result on a bogus MAC.
-		node2 = lightify_get_nodefrommac(_ctx, mac+1);
+		node2 = lightify_node_get_from_mac(_ctx, mac+1);
 		ck_assert_ptr_eq(node2,NULL);
 
 		// check if we can get the node adr
@@ -462,11 +462,11 @@ START_TEST(lightify_tst_scan_nodes)
 		helper_mfs_setup_answer(mfs, scanfornodes_answer,
 				sizeof(scanfornodes_answer));
 
-		err = lightify_scan_nodes(_ctx);
+		err = lightify_node_request_scan(_ctx);
 		ck_assert_int_eq(err, -EPROTO);
 
 		// There must be no node.
-		node = lightify_get_next_node(_ctx,NULL);
+		node = lightify_node_get_next(_ctx,NULL);
 		ck_assert_ptr_eq(node, NULL);
 
 		// undo functions and userdata.
@@ -510,7 +510,7 @@ START_TEST(lightify_tst_manipulate_nodes)
 
 		lightify_set_socket_fn(_ctx, my_write_to_socket, my_read_from_socket);
 		lightify_set_userdata(_ctx, mfs);
-		err = lightify_scan_nodes(_ctx);
+		err = lightify_node_request_scan(_ctx);
 		ck_assert_int_ge(err, 0);
 
 		// test: turn on light, broadcast
@@ -519,7 +519,7 @@ START_TEST(lightify_tst_manipulate_nodes)
 					sizeof(turnonlight_answer_broadcast));
 
 			// test: turn on light, broadcast
-			err = lightify_request_node_set_onoff(_ctx, NULL, 1);
+			err = lightify_node_request_onoff(_ctx, NULL, 1);
 			ck_assert_int_eq(err, 0);
 			err = memcmp(mfs->buf_write, turnonlight_query_broadcast,
 					mfs->size_write);
@@ -528,8 +528,8 @@ START_TEST(lightify_tst_manipulate_nodes)
 			// test: turn on light, addessing node
 			helper_mfs_setup_answer(mfs, turnonlight_answer_node,
 					sizeof(turnonlight_answer_node));
-			err = lightify_request_node_set_onoff(_ctx,
-					lightify_get_next_node(_ctx, NULL), 1);
+			err = lightify_node_request_onoff(_ctx,
+					lightify_node_get_next(_ctx, NULL), 1);
 			ck_assert_int_eq(err, 0);
 
 			err = memcmp(mfs->buf_write, turnonlight_query_node,
@@ -552,7 +552,7 @@ START_TEST(lightify_tst_manipulate_nodes)
 			ck_assert_int_eq(err, 0);
 
 			// check if cache has been updated.
-			err = lightify_node_is_on(lightify_get_next_node(_ctx,0));
+			err = lightify_node_is_on(lightify_node_get_next(_ctx,0));
 			ck_assert_int_eq(err, 1);
 
 		} while(0);
@@ -561,7 +561,7 @@ START_TEST(lightify_tst_manipulate_nodes)
 		do {
 			helper_mfs_setup_answer(mfs, changecct_answer_node,
 					sizeof(changecct_answer_node));
-			err = lightify_request_node_set_cct(_ctx, lightify_get_next_node(_ctx, NULL),
+			err = lightify_node_request_cct(_ctx, lightify_node_get_next(_ctx, NULL),
 					2700, 10);
 			ck_assert_int_eq(err, 0);
 			err = memcmp(mfs->buf_write, changecct_query_node, mfs->size_write);
@@ -583,7 +583,7 @@ START_TEST(lightify_tst_manipulate_nodes)
 			ck_assert_int_eq(err, 0);
 
 			// Check if the cache has been updated
-			err = lightify_node_get_cct(lightify_get_next_node(_ctx,0));
+			err = lightify_node_get_cct(lightify_node_get_next(_ctx,0));
 			ck_assert_int_eq(err, 2700);
 
 		} while(0);
@@ -592,7 +592,7 @@ START_TEST(lightify_tst_manipulate_nodes)
 		do {
 			helper_mfs_setup_answer(mfs, setrgbw_answer_node,
 					sizeof(setrgbw_answer_node));
-			err = lightify_request_node_set_rgbw(_ctx, lightify_get_next_node(_ctx, NULL),
+			err = lightify_node_request_rgbw(_ctx, lightify_node_get_next(_ctx, NULL),
 					1,2,3,4,10);
 			ck_assert_int_eq(err, 0);
 			err = memcmp(mfs->buf_write, setrgbw_query_node, mfs->size_write);
@@ -613,13 +613,13 @@ START_TEST(lightify_tst_manipulate_nodes)
 			}
 			ck_assert_int_eq(err, 0);
 			// Check if the cache has been updated
-			err = lightify_node_get_red(lightify_get_next_node(_ctx,0));
+			err = lightify_node_get_red(lightify_node_get_next(_ctx,0));
 			ck_assert_int_eq(err, 1);
-			err = lightify_node_get_green(lightify_get_next_node(_ctx,0));
+			err = lightify_node_get_green(lightify_node_get_next(_ctx,0));
 			ck_assert_int_eq(err, 2);
-			err = lightify_node_get_blue(lightify_get_next_node(_ctx,0));
+			err = lightify_node_get_blue(lightify_node_get_next(_ctx,0));
 			ck_assert_int_eq(err, 3);
-			err = lightify_node_get_white(lightify_get_next_node(_ctx,0));
+			err = lightify_node_get_white(lightify_node_get_next(_ctx,0));
 			ck_assert_int_eq(err, 4);
 		} while (0);
 
@@ -627,7 +627,7 @@ START_TEST(lightify_tst_manipulate_nodes)
 		do {
 			helper_mfs_setup_answer(mfs, setbright_answer_node,
 					sizeof(setbright_answer_node));
-			err = lightify_request_node_set_brightness(_ctx, lightify_get_next_node(_ctx, NULL),
+			err = lightify_node_request_brightness(_ctx, lightify_node_get_next(_ctx, NULL),
 					0x12,10);
 			ck_assert_int_eq(err, 0);
 			err = memcmp(mfs->buf_write, setbright_query_node, mfs->size_write);
@@ -648,7 +648,7 @@ START_TEST(lightify_tst_manipulate_nodes)
 			}
 			ck_assert_int_eq(err, 0);
 			// Check if the cache has been updated
-			err = lightify_node_get_brightness(lightify_get_next_node(_ctx,0));
+			err = lightify_node_get_brightness(lightify_node_get_next(_ctx,0));
 			ck_assert_int_eq(err, 0x12);
 		} while (0);
 
@@ -656,7 +656,7 @@ START_TEST(lightify_tst_manipulate_nodes)
 		do {
 		helper_mfs_setup_answer(mfs, requpdate_answer_node,
 				sizeof(requpdate_answer_node));
-		err = lightify_request_update_node(_ctx, lightify_get_next_node(_ctx, NULL));
+		err = lightify_node_request_update(_ctx, lightify_node_get_next(_ctx, NULL));
 		ck_assert_int_eq(err, 0);
 
 		err = memcmp(mfs->buf_write, requpdate_query_node, mfs->size_write);
@@ -678,7 +678,7 @@ START_TEST(lightify_tst_manipulate_nodes)
 		ck_assert_int_eq(err, 0);
 
 			// Check if the cache has been updated
-			struct lightify_node* node = lightify_get_next_node(_ctx, NULL);
+			struct lightify_node* node = lightify_node_get_next(_ctx, NULL);
 			ck_assert_int_eq(lightify_node_get_onlinestate(node),0);
 			ck_assert_int_eq(lightify_node_is_on(node),0x01);
 			ck_assert_int_eq(lightify_node_get_brightness(node), 0x55);
@@ -720,7 +720,7 @@ START_TEST(lightify_tst_groups_basic) {
 		helper_mfs_setup_answer(mfs, req_getgroups_answer,
 				sizeof(req_getgroups_answer));
 
-		err = lightify_request_scan_groups(_ctx);
+		err = lightify_group_request_scan(_ctx);
 
 		if ( err < 0) {
 		   print_protocol_mismatch_write(mfs,req_getgroups);
@@ -734,28 +734,28 @@ START_TEST(lightify_tst_groups_basic) {
 	// Obtain pointer to group
 	{
 		// Get first group
-		group = lightify_group_get_next_group(_ctx, NULL);
+		group = lightify_group_get_next(_ctx, NULL);
 		ck_assert(group);
 		// Second.
-		group2 = lightify_group_get_next_group(_ctx,group);
+		group2 = lightify_group_get_next(_ctx,group);
 		ck_assert(group2);
 		// Thrird
-		group2 = lightify_group_get_next_group(_ctx,group2);
+		group2 = lightify_group_get_next(_ctx,group2);
 		ck_assert(group2);
 		// no Fourth
-		group2 = lightify_group_get_next_group(_ctx,group2);
+		group2 = lightify_group_get_next(_ctx,group2);
 		ck_assert(!group2);
 	} while(0);
 
 	// Check if name and id is ok for those speciems..
 	{
-		group = lightify_group_get_next_group(_ctx, NULL);
+		group = lightify_group_get_next(_ctx, NULL);
 		ck_assert_int_eq(strcmp("Gruppe1", lightify_group_get_name(group)),0);
 		ck_assert_int_eq(lightify_group_get_id(group), 1);
-		group = lightify_group_get_next_group(_ctx, group);
+		group = lightify_group_get_next(_ctx, group);
 		ck_assert_int_eq(strcmp("Gruppe2", lightify_group_get_name(group)),0);
 		ck_assert_int_eq(lightify_group_get_id(group), 2);
-		group = lightify_group_get_next_group(_ctx, group);
+		group = lightify_group_get_next(_ctx, group);
 		ck_assert_int_eq(strcmp("Gruppe3", lightify_group_get_name(group)),0);
 		ck_assert_int_eq(lightify_group_get_id(group), 3);
 	} while(0);

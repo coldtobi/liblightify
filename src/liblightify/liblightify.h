@@ -192,7 +192,7 @@ struct timeval lightify_skt_getiotimeout(struct lightify_ctx *ctx);
  * If
  *
  */
-int lightify_scan_nodes(struct lightify_ctx *ctx);
+int lightify_node_request_scan(struct lightify_ctx *ctx);
 
 /** Search node via its MAC address.
  *
@@ -202,7 +202,7 @@ int lightify_scan_nodes(struct lightify_ctx *ctx);
  * @param mac MAC Adress of node (64 bit value, guaranteed to be unique)
  * @return NULL if not found, otherwise pointer to node.
  */
-struct lightify_node *lightify_get_nodefrommac(struct lightify_ctx *ctx, uint64_t mac);
+struct lightify_node *lightify_node_get_from_mac(struct lightify_ctx *ctx, uint64_t mac);
 
 /** Returns the next node in the linked list
  *
@@ -213,7 +213,7 @@ struct lightify_node *lightify_get_nodefrommac(struct lightify_ctx *ctx, uint64_
  * \warning it is not checked if node is actually belonging to this ctx, but
  * this might change in the future
  */
-struct lightify_node* lightify_get_next_node(struct lightify_ctx *ctx,
+struct lightify_node* lightify_node_get_next(struct lightify_ctx *ctx,
 		struct lightify_node *node );
 
 /** Returns the next node in the linked list
@@ -225,7 +225,7 @@ struct lightify_node* lightify_get_next_node(struct lightify_ctx *ctx,
  * \warning it is not checked if node is actually belonging to this ctx,
  * but that might change in the future.
  */
-struct lightify_node* lightify_get_prev_node(struct lightify_ctx *ctx,
+struct lightify_node* lightify_node_get_previous(struct lightify_ctx *ctx,
 		struct lightify_node *node );
 
 
@@ -361,7 +361,7 @@ int lightify_node_get_onlinestate(struct lightify_node* node);
  * @param onoff 1 to turn on, 0 do turn off
  * @return negative on error, 0 on success
  */
-int lightify_request_node_set_onoff(struct lightify_ctx *ctx, struct lightify_node *node, int onoff);
+int lightify_node_request_onoff(struct lightify_ctx *ctx, struct lightify_node *node, int onoff);
 
 /** Set CCT on lamp with configurable time.
  *
@@ -371,7 +371,7 @@ int lightify_request_node_set_onoff(struct lightify_ctx *ctx, struct lightify_no
  * @param fadetime in 1/10 seconds. 0 is instant.
  * @return
  */
-int lightify_request_node_set_cct(struct lightify_ctx *ctx, struct lightify_node *node, unsigned int cct, unsigned int fadetime);
+int lightify_node_request_cct(struct lightify_ctx *ctx, struct lightify_node *node, unsigned int cct, unsigned int fadetime);
 
 /** Set RGBW values
  *
@@ -386,7 +386,7 @@ int lightify_request_node_set_cct(struct lightify_ctx *ctx, struct lightify_node
  * @param fadetime time in 1/10 seconds to reach final values.
  * @return
  */
-int lightify_request_node_set_rgbw(struct lightify_ctx *ctx,
+int lightify_node_request_rgbw(struct lightify_ctx *ctx,
 		struct lightify_node *node, unsigned int r, unsigned int g,
 		unsigned int b,unsigned int w,unsigned int fadetime);
 
@@ -398,7 +398,7 @@ int lightify_request_node_set_rgbw(struct lightify_ctx *ctx,
  * @param fadetime in 1/10 seconds
  * @return
  */
-int lightify_request_node_set_brightness(struct lightify_ctx *ctx,
+int lightify_node_request_brightness(struct lightify_ctx *ctx,
 		struct lightify_node *node, unsigned int level, unsigned int fadetime);
 
 /** Update node information cache
@@ -412,7 +412,7 @@ int lightify_request_node_set_brightness(struct lightify_ctx *ctx,
  * @param node node
  * @return 0 on success, negative on error
  */
-int lightify_request_update_node(struct lightify_ctx *ctx, struct lightify_node *node);
+int lightify_node_request_update(struct lightify_ctx *ctx, struct lightify_node *node);
 
 
 /** opaque struct handling the groups
@@ -426,7 +426,8 @@ struct lightify_group;
  * @param current last group queried
  * @return next group in list or NULL if there isn't
  */
-struct lightify_group *lightify_group_get_next_group(struct lightify_ctx *ctx, struct lightify_group *current);
+struct lightify_group *lightify_group_get_next(struct lightify_ctx *ctx, struct lightify_group *current);
+
 
 /** Get the name associated with the group
  *
@@ -447,7 +448,7 @@ int lightify_group_get_id(struct lightify_group *grp);
  * @param ctx context
  * @return negaitve on error, else number of retrieved groups (might be zero)
  */
-int lightify_request_scan_groups(struct lightify_ctx *ctx);
+int lightify_group_request_scan(struct lightify_ctx *ctx);
 
 /** Get the next node ptr associated with the group
  *
@@ -457,7 +458,7 @@ int lightify_request_scan_groups(struct lightify_ctx *ctx);
  *
  * \note you must scan for nodes to be able to associate nodes ptr with grps.
  */
-struct lightify_node *lightify_group_get_next_node_in_group(struct lightify_group *grp, struct lightify_node *lastnode);
+struct lightify_node *lightify_group_get_next_node(struct lightify_group *grp, struct lightify_node *lastnode);
 
 /** Request group to be turned off or on
  *
@@ -466,7 +467,7 @@ struct lightify_node *lightify_group_get_next_node_in_group(struct lightify_grou
  * @param onoff on or off ( true or false)
  * @return >=0 on success. negtaive on error.
  */
-int lightify_request_group_set_onoff(struct lightify_ctx *ctx, struct lightify_group *group, int onoff);
+int lightify_group_request_onoff(struct lightify_ctx *ctx, struct lightify_group *group, int onoff);
 
 /*** Set group CCT
  *
@@ -476,7 +477,7 @@ int lightify_request_group_set_onoff(struct lightify_ctx *ctx, struct lightify_g
  * @param fadetime time in 1/10 secs
  * @return >=0 on success. negtaive on error.
  */
-int lightify_request_group_set_cct(struct lightify_ctx *ctx, struct lightify_group *group, unsigned int cct, unsigned int fadetime);
+int lightify_group_request_cct(struct lightify_ctx *ctx, struct lightify_group *group, unsigned int cct, unsigned int fadetime);
 
 /*** Set RGBW values
  *
@@ -489,7 +490,7 @@ int lightify_request_group_set_cct(struct lightify_ctx *ctx, struct lightify_gro
  * @param fadetime
  * @return >=0 on success. negtaive on error.
  */
-int lightify_request_group_set_rgbw(struct lightify_ctx *ctx,
+int lightify_group_request_rgbw(struct lightify_ctx *ctx,
 		struct lightify_group *group, unsigned int r, unsigned int g,
 		unsigned int b,unsigned int w,unsigned int fadetime) ;
 
@@ -501,7 +502,7 @@ int lightify_request_group_set_rgbw(struct lightify_ctx *ctx,
  * @param fadetime
  * @return >=0 on success. negtaive on error.
  */
-int lightify_request_group_set_brightness(struct lightify_ctx *ctx,
+int lightify_group_request_brightness(struct lightify_ctx *ctx,
 		struct lightify_group *group, unsigned int level, unsigned int fadetime) ;
 
 
