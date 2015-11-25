@@ -110,7 +110,7 @@ int lightify_group_set_name(struct lightify_group *grp, unsigned char *name) {
 		return -EINVAL;
 	}
 
-	grp->name = strndup(name, 17);
+	grp->name = strndup((char*)name, 17);
 	if (!grp->name) {
 		return -ENOMEM;
 	}

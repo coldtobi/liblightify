@@ -394,7 +394,6 @@ LIGHTIFY_EXPORT struct lightify_node* lightify_node_get_previous(struct lightify
 		struct lightify_node *node )
 {
 	if(!ctx) return NULL;
-	if(!node) return NULL;
     return lightify_node_get_prevnode(node);
 }
 
