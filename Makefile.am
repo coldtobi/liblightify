@@ -1,7 +1,12 @@
-EXTRA_DIST = doc/protocol.txt
+EXTRA_DIST = doc/protocol.txt Doxyfile
 CLEANFILES =
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
 AM_MAKEFLAGS = --no-print-directory
+
+clean-local:
+	-rm -rf doc/doxygen/
+
+include $(top_srcdir)/doxygen-include.am
 
 AM_CPPFLAGS = \
 	-include $(top_builddir)/config.h \
