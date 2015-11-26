@@ -41,25 +41,49 @@ extern "C" {
 #endif
 
 
-/** \defgroup API_CTX */
-/** \defgroup API_SUPPORT */
-/** \defgroup API_CALLBACK */
-/** \defgroup API_NODE */
-/** \defgroup API_GROUP */
+/** \defgroup API_CTX Library Context */
+/** \defgroup API_IO I/O setup and related functions */
+/** \defgroup API_SUPPORT Support Functions */
+/** \defgroup API_CALLBACK Call-backs */
+/** \defgroup API_NODE Node manipulation and state */
+/** \defgroup API_NODE_CACHE Functions for cached node information */
 
-/** \mainpage API Dokumentation for liblightify
+/** \defgroup API_GROUP Group manipulation and state */
+
+/** \mainpage API Documentation for liblightify
  *
- *  \section ll_API C API Documentation
+ *  \section ll_CAPI C API Documentation
+ *
+ *  \subsection ll_CAPI_Sections Library Sections
  *
  *  The library API contains those main sections:
  *  - Library context and I/O setup: \ref API_CTX
  *  - Library support routines, e.g. logging \ref API_SUPPORT
  *  - Library callbacks (e.g I/O) \ref API_CALLBACK
  *  - Nodes (Lamp) related: \ref API_NODE
- *  - Group related: \ref API_GROUP
+ *  - Group relatedNode manipulation and state: \ref API_GROUP
+ *
+ *  \subsections ll_CAPI_NodeCache Node Information Cache
+ *
+ *  Nodes (Lamps) are queried from the gateway using lightify_nodes_scan().
+ *  The library will then cache the retrieved information in memory, and when
+ *  using the API to retrieve the properties the cached information is returned.
+ *
+ *  That means, if the node is manipulated externally, the cache will still read
+ *  the old value as it needs an explicit request to update the node's cache.
+ *
+ *  Updating the cache can be done via an repeated scan for the nodes
+ *  via lightify_nodes_scan() or via an update request lightify_nodes_update().
+ *
+ *  Note that a new scan will invalidate all library node objects -- all node pointers
+ *  will become invalid and replaced by a new copy.
+ *
+ *  The functions to obtain cached node information are documented here:
+ *  \ref API_NODE_CACHE
  *
  *  \section ll_APICPP C++ API Documentation
  *
+ *  The C++ API is a wrapper for the C-Library.
  *  See the classes \ref Lightify and \ref Lightify_Node.
  *
  */
@@ -102,7 +126,7 @@ enum lightify_node_online_state {
  * Stores information about the system and the states.
  *
  * \note this is opaque on purpose. Only use the API to access it.
- * \ingroup API_NODE
+ * \ingroup API_CTX
  */
 struct lightify_ctx;
 
@@ -117,7 +141,7 @@ struct lightify_ctx;
  * @return return a negative number (preferable from errno.h) on error,
  *  otherwise return the actually amount of bytes written.
  *
- * \ingroup API_CALLBACK
+ * \ingroup API_CALLBACK API_IO
  *
  * \sa Default implementation is write_to_socket in module socket.h
  * \sa lightify_set_socket_fn
@@ -135,7 +159,7 @@ typedef int (*write_to_socket_fn)(struct lightify_ctx *ctx, unsigned char *msg, 
  * @return return a negative number (preferable from errno.h) on error,
  *  otherwise return the actually amount of bytes read.
  *
- * \ingroup API_CALLBACK
+ * \ingroup API_CALLBACK API_IO
  *
  * \sa Default implementation is read_from_socket in module socket.h
  * \sa lightify_set_socket_fn
@@ -173,16 +197,17 @@ int lightify_free(struct lightify_ctx *ctx);
  *  if you want to roll your own.
  *
  *	If one of the pointers are NULL, default handling will be reinstated,
- *	which is basically unix I/O using read(2) and write(2).
- *
- *	The functions
+ *	which is basically unix I/O using read(2) and write(2). See write_to_socket()
+ *	and read_from_socket() for the implementation.
  *
  * @param
  * @param write_to_socket_fn function pointer for the write function to be used
  * @param read_from_socket function pointer for the read functoin to be used.
  * @return 0 on success, negative on error.
  *
- * \ingroup API_CTX
+ * \ingroup API_IO API_CALLBACK
+ *
+ * \sa write_to_socket read_from_socket
  */
 int lightify_set_socket_fn(struct lightify_ctx *ctx,
 		write_to_socket_fn fpw,	read_from_socket_fn fpr);
@@ -190,16 +215,20 @@ int lightify_set_socket_fn(struct lightify_ctx *ctx,
 
 /** set the socket fd to be used for communication.
  *
- * The lib expects here a int lightify_skt_setiotimeout(struct lightify_ctx *ctx, struct timeval tv);
- * ready-to-use socket supplied
- * by the app. It is safe to use non-blocking I/O.
+ * When using the default I/O functions read_from_socket() and write_to_socket(),
+ * the lib expects a ready-to-use socket supplied by the application.
+ * It is safe to use non-blocking I/O.
+ *
  * To unset the fd, pass -1.
  *
  * @param ctx contect
  * @param socket file descriptor to be used or -1 to unset
  * @return 0 on success, negative on error
  *
- * \ingroup API_CTX
+ * \ingroup API_IO
+ *
+ * \sa lightify_set_socket_fn lightify_skt_getfd
+ *
  */
 int lightify_skt_setfd(struct lightify_ctx *ctx, int socket);
 
@@ -207,7 +236,10 @@ int lightify_skt_setfd(struct lightify_ctx *ctx, int socket);
  *
  * @param ctx
  * @return socket, or -1 if no socket was set
- * \ingroup API_CTX
+ *
+ * \ingroup API_IO
+ *
+ * \sa read_from_socket lightify_set_socket_fn
  */
 int lightify_skt_getfd(struct lightify_ctx *ctx);
 
@@ -219,7 +251,13 @@ int lightify_skt_getfd(struct lightify_ctx *ctx);
  *
  * \note the timeout is only used if the socket is setup using
  * O_NONBLOCK.
- * \ingroup API_CTX
+ *
+ * \note used by the default I/O implementation, write_to_socket() and
+ * read_from_socket(), see there.
+ *
+ * \ingroup API_IO
+ *
+ * \sa write_to_socket() read_from_socket()
  */
 int lightify_skt_setiotimeout(struct lightify_ctx *ctx, struct timeval tv);
 
@@ -227,12 +265,15 @@ int lightify_skt_setiotimeout(struct lightify_ctx *ctx, struct timeval tv);
  *
  * @param ctx
  * @return timeval. if ctx was NULL, returns a timeval set to zero.
- * \ingroup API_CTX
+ *
+ * \note used by the default I/O implementation, write_to_socket() and
+ * read_from_socket(), see there.
+ *
+ * \ingroup API_IO
  */
 struct timeval lightify_skt_getiotimeout(struct lightify_ctx *ctx);
 
 
-// Gateway stuff
 /** Ask the gateway to provide informations about attached nodes
  *
  * The library will query the gateway to submit all known nodes.
@@ -241,8 +282,7 @@ struct timeval lightify_skt_getiotimeout(struct lightify_ctx *ctx);
  * will be removed from the list.
  *
  * @param ctx context
- * @return >=0 on success, negative on errors.
- * The number returned equals to the number of nodes found.
+ * @return the number of nodes detected (>=0) on success, negative on errors.
  *
  * \note All previous supplied node pointers become invalid after this call.
  *
