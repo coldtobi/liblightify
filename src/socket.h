@@ -27,8 +27,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/*
- * socket.h
+/** \file socket.h
  *
  *  Created on: 17.08.2015
  *      Author: tobi
@@ -52,7 +51,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 int write_to_socket(struct lightify_ctx *ctx, unsigned char *msg, size_t size);
 
-/*** Read from socket, handling async I/O and co
+/** Read from socket, handling async I/O and co
  *
  * @param ctx 	library context
  * @param msg	where to store the result

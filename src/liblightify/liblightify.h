@@ -41,56 +41,104 @@ extern "C" {
 #endif
 
 
+/** \defgroup API_CTX */
+/** \defgroup API_SUPPORT */
+/** \defgroup API_CALLBACK */
+/** \defgroup API_NODE */
+/** \defgroup API_GROUP */
+
+/** \mainpage API Dokumentation for liblightify
+ *
+ *  \section ll_API C API Documentation
+ *
+ *  The library API contains those main sections:
+ *  - Library context and I/O setup: \ref API_CTX
+ *  - Library support routines, e.g. logging \ref API_SUPPORT
+ *  - Library callbacks (e.g I/O) \ref API_CALLBACK
+ *  - Nodes (Lamp) related: \ref API_NODE
+ *  - Group related: \ref API_GROUP
+ *
+ *  \section ll_APICPP C++ API Documentation
+ *
+ *  See the classes \ref Lightify and \ref Lightify_Node.
+ *
+ */
+
+/*** \file liblightify.h
+ *
+ * This header defines the public interface to the library.
+ */
+
+
 /* NXP has a nice ZigBee Light Link guide declaring all those types
  * NOTE: Definitions for  On/Off Light and Dimmable Plug Unit are unknown,
  * those two ZLL classes are missing for completeness... */
-/** Known lamp types. */
+
+/** Known lamp types and what they can do.
+ *
+ * \ingroup API_NODE
+*/
 enum lightify_node_type {
-	LIGHTIFY_ONOFF_PLUG,
-	LIGHTIFY_DIMABLE_LIGHT,
-	LIGHTIFY_COLOUR_LIGHT,
-	LIGHTIFY_EXT_COLOUR_LIGHT,
-	LIGHTIFY_CCT_LIGHT,
-	LIGHTIFY_UNKNOWNTYPE = 0xFF00 // if you encounter this, please encourage people to provide details. The lamp type is in the lower bits.
+	LIGHTIFY_ONOFF_PLUG,      /**< Only On/off capable lamp/device */
+	LIGHTIFY_DIMABLE_LIGHT,   /**< Can only control brightness */
+	LIGHTIFY_COLOUR_LIGHT,    /**< RGBW */
+	LIGHTIFY_EXT_COLOUR_LIGHT,/**< Tuneable White and RGBW  */
+	LIGHTIFY_CCT_LIGHT,       /**< Tuneable White */
+	LIGHTIFY_UNKNOWNTYPE = 0xFF00 /**< if you encounter this, please encourage people to provide details. The lamp type is in the lower bits.*/
 };
 
-/** online / offline information. */
+/** Node online / offline information provided from the gateway
+ *
+ * \ingroup API_NODE
+*/
 enum lightify_node_online_state {
-	LIGHTIFY_OFFLINE = 0,
-	LIGHTIFY_ONLINE = 2,
+	LIGHTIFY_OFFLINE = 0, 	/**< offline */
+	LIGHTIFY_ONLINE = 2,    /**< online */
 };
 
 /** lightyfy_ctx
  *
  * library user context.
- * Stores information about the system and the states
+ * Stores information about the system and the states.
  *
+ * \note this is opaque on purpose. Only use the API to access it.
+ * \ingroup API_NODE
  */
 struct lightify_ctx;
 
 /** callback to roll your own I/O: Writing
  *
- * if the default is overriden, this function is called whenever the lib wants
- * to talk to the gateway.
+ * if the default function is overriden, this function is called whenever the
+ * library wants to talk to the gateway.
  *
  * @param ctx library context
  * @param msg what to write
  * @param size how much to write
  * @return return a negative number (preferable from errno.h) on error,
  *  otherwise return the actually amount of bytes written.
+ *
+ * \ingroup API_CALLBACK
+ *
+ * \sa Default implementation is write_to_socket in module socket.h
+ * \sa lightify_set_socket_fn
  */
 typedef int (*write_to_socket_fn)(struct lightify_ctx *ctx, unsigned char *msg, size_t size);
 
-/** callback to roll your own I/O: Writing
+/** callback to roll your own I/O: Reading
  *
- * if the default is overriden, this function is called whenever the lib wants
- * to read from the gateway.
+ * if the default is overriden, this function is called whenever the library
+ * wants to read from the gateway.
  *
  * @param ctx library context
  * @param msg where to place the received bytes
  * @param size how much to read. Do not read more than this!
  * @return return a negative number (preferable from errno.h) on error,
  *  otherwise return the actually amount of bytes read.
+ *
+ * \ingroup API_CALLBACK
+ *
+ * \sa Default implementation is read_from_socket in module socket.h
+ * \sa lightify_set_socket_fn
  */
 typedef int (*read_from_socket_fn)(struct lightify_ctx *ctx, unsigned char *msg, size_t size);
 
@@ -103,6 +151,8 @@ typedef int (*read_from_socket_fn)(struct lightify_ctx *ctx, unsigned char *msg,
  *    Until then, provide NULL.
  *
  * @return 0 on success, negative value on error.
+ *
+ * \ingroup API_CTX
  */
 int lightify_new(struct lightify_ctx **ctx, void *reserved);
 
@@ -111,6 +161,8 @@ int lightify_new(struct lightify_ctx **ctx, void *reserved);
  *
  * @param ctx
  * @return 0 on success, negative on errors (e.g wrong parameter)
+ *
+ * \ingroup API_CTX
  */
 int lightify_free(struct lightify_ctx *ctx);
 
@@ -129,6 +181,8 @@ int lightify_free(struct lightify_ctx *ctx);
  * @param write_to_socket_fn function pointer for the write function to be used
  * @param read_from_socket function pointer for the read functoin to be used.
  * @return 0 on success, negative on error.
+ *
+ * \ingroup API_CTX
  */
 int lightify_set_socket_fn(struct lightify_ctx *ctx,
 		write_to_socket_fn fpw,	read_from_socket_fn fpr);
@@ -144,6 +198,8 @@ int lightify_set_socket_fn(struct lightify_ctx *ctx,
  * @param ctx contect
  * @param socket file descriptor to be used or -1 to unset
  * @return 0 on success, negative on error
+ *
+ * \ingroup API_CTX
  */
 int lightify_skt_setfd(struct lightify_ctx *ctx, int socket);
 
@@ -151,6 +207,7 @@ int lightify_skt_setfd(struct lightify_ctx *ctx, int socket);
  *
  * @param ctx
  * @return socket, or -1 if no socket was set
+ * \ingroup API_CTX
  */
 int lightify_skt_getfd(struct lightify_ctx *ctx);
 
@@ -162,6 +219,7 @@ int lightify_skt_getfd(struct lightify_ctx *ctx);
  *
  * \note the timeout is only used if the socket is setup using
  * O_NONBLOCK.
+ * \ingroup API_CTX
  */
 int lightify_skt_setiotimeout(struct lightify_ctx *ctx, struct timeval tv);
 
@@ -169,6 +227,7 @@ int lightify_skt_setiotimeout(struct lightify_ctx *ctx, struct timeval tv);
  *
  * @param ctx
  * @return timeval. if ctx was NULL, returns a timeval set to zero.
+ * \ingroup API_CTX
  */
 struct timeval lightify_skt_getiotimeout(struct lightify_ctx *ctx);
 
@@ -176,21 +235,22 @@ struct timeval lightify_skt_getiotimeout(struct lightify_ctx *ctx);
 // Gateway stuff
 /** Ask the gateway to provide informations about attached nodes
  *
- * @param ctx context
- * @return >=0 on success, negative on errors.
- * The number returned equals to the number of nodes found.
- *
  * The library will query the gateway to submit all known nodes.
  *
  * Disappeared nodes (and ones with stale information that cannot be updated)
  * will be removed from the list.
  *
- * \warning This will invalidate all pointers to node structures!
+ * @param ctx context
+ * @return >=0 on success, negative on errors.
+ * The number returned equals to the number of nodes found.
+ *
+ * \note All previous supplied node pointers become invalid after this call.
  *
  * \note on errors it might be that already a few nodes have been successfully
- * parsed. This can be checked via the API to retrieve node pointers:
- * If
+ * parsed. This can be checked via the API to retrieve node pointers. If there
+ * are some. the call partially succeeded.
  *
+ * \ingroup API_NODE
  */
 int lightify_node_request_scan(struct lightify_ctx *ctx);
 
@@ -201,6 +261,7 @@ int lightify_node_request_scan(struct lightify_ctx *ctx);
  * @param ctx Library context
  * @param mac MAC Adress of node (64 bit value, guaranteed to be unique)
  * @return NULL if not found, otherwise pointer to node.
+ * \ingroup API_NODE
  */
 struct lightify_node *lightify_node_get_from_mac(struct lightify_ctx *ctx, uint64_t mac);
 
@@ -212,6 +273,7 @@ struct lightify_node *lightify_node_get_from_mac(struct lightify_ctx *ctx, uint6
  *
  * \warning it is not checked if node is actually belonging to this ctx, but
  * this might change in the future
+ * \ingroup API_NODE
  */
 struct lightify_node* lightify_node_get_next(struct lightify_ctx *ctx,
 		struct lightify_node *node );
@@ -224,6 +286,7 @@ struct lightify_node* lightify_node_get_next(struct lightify_ctx *ctx,
  *
  * \warning it is not checked if node is actually belonging to this ctx,
  * but that might change in the future.
+ * \ingroup API_NODE
  */
 struct lightify_node* lightify_node_get_previous(struct lightify_ctx *ctx,
 		struct lightify_node *node );
@@ -231,16 +294,61 @@ struct lightify_node* lightify_node_get_previous(struct lightify_ctx *ctx,
 
 // Managment stuff
 
+/** Setup logging callback.
+ *
+ * @param ctx library context
+ * @param log_fn function to be used for logging
+ * @return negative on error, >=0 on success.
+ *
+ * \ingroup API_SUPPORT
+ *
+ * \sa lightify_set_log_fn for the default implementation
+ */
 int lightify_set_log_fn(struct lightify_ctx *ctx,
 		void (*log_fn)(struct lightify_ctx *ctx, int priority, const char *file,
 				int line, const char *fn, const char *format, va_list args));
 
+/** Get logging priority
+ *
+ * @param ctx context
+ * @return current logging priority
+ *
+ * \ingroup API_SUPPORT
+ */
 int lightify_get_log_priority(struct lightify_ctx *ctx);
 
+/** Set logging priority
+ *
+ * @param ctx context
+ * @param priority priotiry to be set.
+ * @return >=0 on success
+ *
+ * \ingroup API_SUPPORT
+ */
 int lightify_set_log_priority(struct lightify_ctx *ctx, int priority);
 
+/** Get the stored userdata
+ *
+ * @param ctx context
+ * @return >=0 on success
+ *
+ * \sa lightify_set_userdata
+ * \ingroup API_CTX
+ */
 void *lightify_get_userdata(struct lightify_ctx *ctx);
 
+/** Store a pointer in the library context.
+ *
+ * This can be used for user-data to be associated with the context.
+ *
+ *
+ * @param ctx	context
+ * @param userdata pointer to be stored
+ * @return >=0 on success
+ *
+ * \ingroup API_CTX
+ * \sa lightify_get_userdata
+ */
 int lightify_set_userdata(struct lightify_ctx *ctx, void *userdata);
 
 
@@ -251,6 +359,7 @@ int lightify_set_userdata(struct lightify_ctx *ctx, void *userdata);
  * @param node
  * @return pointer to name or NULL
  *
+ * \ingroup API_NODE
  */
 const char* lightify_node_get_name(struct lightify_node* node);
 
@@ -259,6 +368,7 @@ const char* lightify_node_get_name(struct lightify_node* node);
  * @param node
  * @return node address
  *
+ * \ingroup API_NODE
  */
 uint64_t lightify_node_get_nodeadr(struct lightify_node* node);
 
@@ -267,88 +377,127 @@ uint64_t lightify_node_get_nodeadr(struct lightify_node* node);
  * @param node
  * @return node address
  *
+ * \ingroup API_NODE
  */
 uint16_t lightify_node_get_zoneadr(struct lightify_node* node);
 
-/** Get the node's group address (short ZLL address)
+/** Get the node's group address
+ *
+ * \note The group adress is a bitmask, every bit correspondending to a group.
+ * The Bit set equals to the Group's ID.
  *
  * @param node
  * @return node address
  *
+ * \ingroup API_NODE
  */
 uint16_t lightify_node_get_grpadr(struct lightify_node* node);
 
 /** Get node's ZLL lamp type
  *
  * @param node
- * @return
+ * @return lamp type
+ *
+ * \sa lightify_node_type
+ *
+ * \ingroup API_NODE
  */
 enum lightify_node_type lightify_node_get_lamptype(struct lightify_node* node);
 
 /** Get the color components of the node: RED
  *
- * @param node
+ * @param node lamp
  * @return the value normalized from 0 to 255. negative numbers means: information not available.
+ *
+ * \ingroup API_NODE
  */
 int lightify_node_get_red(struct lightify_node* node);
 
 /** Get the color component of the node: GREEN
  *
- * @param node
- * @param green
- * @return
+ * @param node lamp
+ * @return the value normalized from 0 to 255. negative numbers means: information not available.
+ *
+ * \ingroup API_NODE
+ *
+ * \note this function returns cached data. Be sure to refresh the data before when required.
  */
 int lightify_node_get_green(struct lightify_node* node);
 
 /** Get the color component of the node: BLUE
  *
- * @param node
- * @param blue
- * @return
+ * @param node lamp
+ * @return the value normalized from 0 to 255. negative numbers means: information not available.
+ *
+ * \ingroup API_NODE
+ *
+ * \note this function returns cached data. Be sure to refresh the data before when required.
  */
 int lightify_node_get_blue(struct lightify_node* node);
 
 /** Get the color component of the node: WHITE
  *
- * @param node
- * @param white
- * @return
+ * @param node lamp
+ * @return the value normalized from 0 to 255. negative numbers means: information not available.
+ *
+ * \ingroup API_NODE
+ *
+ * \note this function returns cached data. Be sure to refresh the data before when required.
  */
-int lightify_node_get_white(struct lightify_node* white);
+int lightify_node_get_white(struct lightify_node* node);
 
 /** Get the Correlated Color Temperature
  *
- * @param node
- * @return the value. negative numbers means: information not available.
+ * @param node lamp
+ * @return the value. Negative numbers means: information not available.
+ *
+ * \ingroup API_NODE
+ *
+ * \note this function returns cached data. Be sure to refresh the data before when required.
  */
 int lightify_node_get_cct(struct lightify_node* node);
 
 /** Get a brightness value
  *
- * @param node
+ * @param node lamp to be queried
  * @return the value. negative numbers means: information not available.
+ *
+ * \ingroup API_NODE
+ *
+ * \note this function returns cached data. Be sure to refresh the data before when required.
  */
 int lightify_node_get_brightness(struct lightify_node* node);
 
 /** Return the node status
  *
- * @param node
+ * @param node lamp
  * @return 0 = off, 1 = 0n, -1=unknown
+ *
+ * \ingroup API_NODE
+ *
+ * \note this function returns cached data. Be sure to refresh the data before when required.
  */
 int lightify_node_is_on(struct lightify_node* node);
 
-/** Returns if we believe the node is live or stale (e.g command failed when
- * modifying the state of it)
+/** Check if we think that the cache is actual with lamp state.
  *
- * @param node
- * @return negative on error, 0 if not stale, 1 if not seen on last scan.
+ * A lamp can become stale if a command manipulating its state failed.
+ *
+ * Staleness is reset after scanning for nodes or updating a node.
+ *
+ * @param node lamp
+ * @return negative on error, 0 if not stale, 1 otherwise
+ *
+ * \ingroup API_NODE
  */
 int lightify_node_is_stale(struct lightify_node *node);
 
 /** Get the online status
  *
- * @param node
- * @return
+ * @param node lamp
+ * @return negative on error, otherwise see enum lightify_node_online_state
+ *
+ * \ingroup API_NODE
  */
 int lightify_node_get_onlinestate(struct lightify_node* node);
 
@@ -359,7 +508,9 @@ int lightify_node_get_onlinestate(struct lightify_node* node);
  * @param ctx library context
  * @param node node to address. If NULL, broadcast.
  * @param onoff 1 to turn on, 0 do turn off
- * @return negative on error, 0 on success
+ * @return negative on error, >=0 on success
+ *
+ * \ingroup API_NODE
  */
 int lightify_node_request_onoff(struct lightify_ctx *ctx, struct lightify_node *node, int onoff);
 
@@ -369,7 +520,9 @@ int lightify_node_request_onoff(struct lightify_ctx *ctx, struct lightify_node *
  * @param node
  * @param cct color temperature. (note: not filtered, but usually between 2700 and 6500)
  * @param fadetime in 1/10 seconds. 0 is instant.
- * @return
+ * @return negative on error, >=0 on success
+ *
+ * \ingroup API_NODE
  */
 int lightify_node_request_cct(struct lightify_ctx *ctx, struct lightify_node *node, unsigned int cct, unsigned int fadetime);
 
@@ -384,7 +537,9 @@ int lightify_node_request_cct(struct lightify_ctx *ctx, struct lightify_node *no
  * @param b blue value
  * @param w white value
  * @param fadetime time in 1/10 seconds to reach final values.
- * @return
+ * @return negative on error, >=0 on success
+ *
+ * \ingroup API_NODE
  */
 int lightify_node_request_rgbw(struct lightify_ctx *ctx,
 		struct lightify_node *node, unsigned int r, unsigned int g,
@@ -396,7 +551,9 @@ int lightify_node_request_rgbw(struct lightify_ctx *ctx,
  * @param node to be manuipulated
  * @param level 0..100
  * @param fadetime in 1/10 seconds
- * @return
+ * @return negative on error, >=0 on success
+ *
+ * \ingroup API_NODE
  */
 int lightify_node_request_brightness(struct lightify_ctx *ctx,
 		struct lightify_node *node, unsigned int level, unsigned int fadetime);
@@ -410,13 +567,16 @@ int lightify_node_request_brightness(struct lightify_ctx *ctx,
  *
  * @param ctx context
  * @param node node
- * @return 0 on success, negative on error
+ * @return negative on error, >=0 on success
+ *
+ * \ingroup API_NODE
  */
 int lightify_node_request_update(struct lightify_ctx *ctx, struct lightify_node *node);
 
 
 /** opaque struct handling the groups
  *
+ * \ingroup API_GROUP
 */
 struct lightify_group;
 
@@ -424,7 +584,9 @@ struct lightify_group;
  *
  * @param ctx context
  * @param current last group queried
- * @return next group in list or NULL if there isn't
+ * @return next group in list or NULL if there isn't one
+ *
+ * \ingroup API_GROUP
  */
 struct lightify_group *lightify_group_get_next(struct lightify_ctx *ctx, struct lightify_group *current);
 
@@ -432,7 +594,9 @@ struct lightify_group *lightify_group_get_next(struct lightify_ctx *ctx, struct 
  *
  * @param ctx context
  * @param current last group queried
- * @return previous group in list or NULL if there isn't
+ * @return previous group in list or NULL if there isn't one
+ *
+ * \ingroup API_GROUP
  */
 struct lightify_group *lightify_group_get_previous(struct lightify_ctx *ctx, struct lightify_group *current);
 
@@ -440,20 +604,26 @@ struct lightify_group *lightify_group_get_previous(struct lightify_ctx *ctx, str
  *
  * @param grp Group pointer
  * @return pointer to a string with the name
+ *
+ * \ingroup API_GROUP
  */
 const char *lightify_group_get_name(struct lightify_group *grp);
 
 /** Get the ID of the group
  *
  * @param grp
- * @return group address or negative on error.
+ * @return group id or negative on error.
+ *
+ * \ingroup API_GROUP
  */
 int lightify_group_get_id(struct lightify_group *grp);
 
 /** Request the list of known groups
  *
  * @param ctx context
- * @return negaitve on error, else number of retrieved groups (might be zero)
+ * @return negative on error, else number of retrieved groups (might be zero)
+ *
+ * \ingroup API_GROUP
  */
 int lightify_group_request_scan(struct lightify_ctx *ctx);
 
@@ -463,7 +633,9 @@ int lightify_group_request_scan(struct lightify_ctx *ctx);
  * @param lastnode last node asked for, NULL if the first
  * @return NULL is not found, else pointer.
  *
- * \note you must scan for nodes to be able to associate nodes ptr with grps.
+ * \note you must scan for nodes to be able to associate nodes with the groups.
+ *
+ * \ingroup API_GROUP
  */
 struct lightify_node *lightify_group_get_next_node(struct lightify_group *grp, struct lightify_node *lastnode);
 
@@ -472,21 +644,25 @@ struct lightify_node *lightify_group_get_next_node(struct lightify_group *grp, s
  * @param ctx context
  * @param group group ptr
  * @param onoff on or off ( true or false)
- * @return >=0 on success. negtaive on error.
+ * @return >=0 on success. negative on error.
+ *
+ * \ingroup API_GROUP
  */
 int lightify_group_request_onoff(struct lightify_ctx *ctx, struct lightify_group *group, int onoff);
 
-/*** Set group CCT
+/** Set group CCT
  *
  * @param ctx context
  * @param group group
  * @param cct CCT
  * @param fadetime time in 1/10 secs
- * @return >=0 on success. negtaive on error.
+ * @return >=0 on success. negative on error.
+ *
+ * \ingroup API_GROUP
  */
 int lightify_group_request_cct(struct lightify_ctx *ctx, struct lightify_group *group, unsigned int cct, unsigned int fadetime);
 
-/*** Set RGBW values
+/** Set RGBW values
  *
  * @param ctx
  * @param group
@@ -495,7 +671,9 @@ int lightify_group_request_cct(struct lightify_ctx *ctx, struct lightify_group *
  * @param b
  * @param w
  * @param fadetime
- * @return >=0 on success. negtaive on error.
+ * @return >=0 on success. negative on error.
+ *
+ * \ingroup API_GROUP
  */
 int lightify_group_request_rgbw(struct lightify_ctx *ctx,
 		struct lightify_group *group, unsigned int r, unsigned int g,
@@ -507,7 +685,9 @@ int lightify_group_request_rgbw(struct lightify_ctx *ctx,
  * @param group
  * @param level
  * @param fadetime
- * @return >=0 on success. negtaive on error.
+ * @return >=0 on success. negative on error.
+ *
+ * \ingroup API_GROUP
  */
 int lightify_group_request_brightness(struct lightify_ctx *ctx,
 		struct lightify_group *group, unsigned int level, unsigned int fadetime) ;

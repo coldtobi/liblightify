@@ -30,8 +30,8 @@
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * lightify++.h
+/**
+ * \file lightify++.h
  *
  *  Created on: 22.09.2015
  *      Author: Tobias Frost

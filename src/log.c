@@ -96,26 +96,12 @@ LIGHTIFY_EXPORT int lightify_set_log_fn(struct lightify_ctx *ctx,
 	return 0;
 }
 
-/**
- * lightify_get_log_priority:
- * @ctx: library context
- *
- * Returns: the current logging priority
- **/
 LIGHTIFY_EXPORT int lightify_get_log_priority(struct lightify_ctx *ctx)
 {
 		if (!ctx) return -EINVAL;
         return ctx->log_priority;
 }
 
-/**
- * lightify_set_log_priority:
- * @ctx: library context
- * @priority: the new logging priority
- *
- * Set the current logging priority. The value controls which messages
- * are logged.
- **/
 LIGHTIFY_EXPORT int lightify_set_log_priority(struct lightify_ctx *ctx, int priority)
 {
 		if (!ctx) return -EINVAL;
