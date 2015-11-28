@@ -211,7 +211,6 @@ private:
 	struct lightify_ctx *_ctx;
 };
 
-
 class Lightify_Group {
 	friend class Lightify;
 protected:
@@ -229,6 +228,52 @@ public:
 	const char *GetName() {
 		return lightify_group_get_name(_group);
 	}
+
+	/** Turn on / off */
+	int TurnOnOff(bool onoff) {
+		return lightify_group_request_onoff(_ctx, _group, onoff);
+	}
+
+	/** Set color temperature
+	 *
+	 *  \param cct to be set
+	 *  \param time fadetime for transition in 1/10 secs
+	 *
+	 *  \returns negative on error
+	 */
+	int SetCCT(int cct, int time) {
+		return lightify_group_request_cct(_ctx, _group, cct, time);
+	}
+
+	/** Set color components
+	 *
+	 *  \note observed, that white can only be set when the other colors are 0.
+	 *
+	 *  Color values are good from 0-255
+	 *
+	 *  \param red to be set
+	 *  \param green to be set
+	 *  \param blue to be set
+	 *  \param white to be set
+	 *  \param time fadetime for transition in 1/10 secs
+	 *
+	 * \returns negative on error
+	 * */
+	int SetRGBW(int red, int green, int blue, int white, int time) {
+		return lightify_group_request_rgbw(_ctx,_group, red, green, blue, white, time);
+	}
+
+	/** Set brightness
+	 *
+	 *  \param level 0..100
+	 *  \param time time in 1/10s
+	 *
+	 *  \returns negative on error
+	 * */
+	int SetBrightness(int level, int time) {
+		return lightify_group_request_brightness(_ctx, _group, level, time);
+	}
+
 
 private:
 	Lightify_Group(const Lightify_Group &) {
