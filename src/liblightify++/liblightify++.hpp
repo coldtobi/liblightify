@@ -228,6 +228,7 @@ public:
 		_sockfd = -1;
 		lightify_new(&_ctx, NULL);
 		_nodesmap = NULL;
+		_no_nodes = 0;
 	}
 
 	virtual ~Lightify() {
@@ -310,8 +311,6 @@ err_out:
 	int ScanNodes(void) {
 
 		int err;
-		int count = 0;
-
 		if (_sockfd == -1) return -EBADF;
 		_free_nodemap();
 		err = lightify_node_request_scan(_ctx);
@@ -320,7 +319,6 @@ err_out:
 		struct lean_nodemap *last_inserted = NULL;
 		struct lightify_node *node = NULL;
 		while(node = lightify_node_get_next(_ctx,node)) {
-			count++;
 			struct lean_nodemap *nm = new lean_nodemap();
 			if (!nm) return -ENOMEM;
 			nm->next = 0;
@@ -332,9 +330,12 @@ err_out:
 				last_inserted->next = nm;
 			}
 			last_inserted = nm;
+			_no_nodes ++;
 		}
-		return count;
+		return _no_nodes;
+
 	}
+
 
 	/** Get direct access to the lighitfy context
 	 *
@@ -361,16 +362,17 @@ err_out:
 		return NULL;
 	}
 
-	/** Get access to the nodesmap. */
-	const  Lightify_Node* GetNodeAtPosX(int x) {
-		if (GetNodesCount() < x) return NULL;
-		std::map<unsigned long long, Lightify_Node*>::const_iterator it;
-		it = _nodesmap.begin();
-		while(x--) it++;
-		return  (*it).second;
+	/** Get node at Pos X
+	 *
+	 * \return pointer or NULL
+	 *
+	 */
+	Lightify_Node* GetNodeAtPosX(int x) const {
+		if (x >= _no_nodes) return NULL;
 		struct lean_nodemap *nm = _nodesmap;
-		while(nm && x--) {nm = nm->next;}
+		while(nm && x--) nm = nm->next;
 		return (nm ? nm->node : NULL);
+	}
 
 	}
 
@@ -409,16 +411,9 @@ err_out:
 		return 0;
 	}
 
-    int GetNodesCount(void) {
-		struct lean_nodemap *nm = _nodesmap;
-		int ret = 0;
-		while (nm) {
-			ret++;
-			nm = nm->next;
-		}
-		return ret;
-    }
 
+	int GetNodesCount(void) {
+		return _no_nodes;
 	}
 
 
@@ -432,6 +427,7 @@ private:
 			nm = nmtmp;
 		}
 		_nodesmap = NULL;
+		_no_nodes = 0;
 	}
 
 	struct lightify_ctx *_ctx;
@@ -446,6 +442,8 @@ private:
 	};
 
 	struct lean_nodemap *_nodesmap;
+
+	int _no_nodes;
 };
 
 
