@@ -110,7 +110,21 @@ int main(void) {
 			setw(3)  << node->GetWhite() << " | "  <<
 			setw(1) <<  (node->IsStale() ? '*' :' ') << " |" << endl;
 	}
-	cout << "|-----------------|------------------|---------|-------|---------|-----|-----|------|-----|-----|-----|-----|---|" << endl;
+
+
+	cout << "|-----------------|------------------|---------|-------|---------|-----|-----|------|-----|-----|-----|-----|---|" << endl << endl;
+	l.ScanGroups();
+	cout << "|------------------|--------|" << endl;
+	cout << "| Group Name       | id     |" << endl;
+	cout << "|------------------|--------|" << endl;
+	Lightify_Group *group = NULL;
+	for (int i = 0; i < l.GetGroupsCount(); i++) {
+		group = l.GetGroupAtPosX(i);
+		cout << '|' <<
+			setw(17) << group->GetName() << " | " <<
+			setw(6)  << group->GetId() << " |" << endl;
+	}
+	cout  << "|------------------|--------|" << endl;
 
 	return 0;
 }
