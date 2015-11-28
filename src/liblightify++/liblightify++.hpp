@@ -211,6 +211,39 @@ private:
 	struct lightify_ctx *_ctx;
 };
 
+
+class Lightify_Group {
+	friend class Lightify;
+protected:
+	Lightify_Group(struct lightify_ctx *ctx,
+			struct lightify_group *group) {
+		_ctx = ctx;
+		_group = group;
+	}
+
+public:
+	int GetId() {
+		return lightify_group_get_id(_group);
+	}
+
+	const char *GetName() {
+		return lightify_group_get_name(_group);
+	}
+
+private:
+	Lightify_Group(const Lightify_Group &) {
+		// No copies!
+		// Just to avoid warnings..
+		_ctx = NULL; _group = NULL;
+	}
+
+
+
+private:
+	struct lightify_group *_group;
+	struct lightify_ctx *_ctx;
+};
+
 /** Lightify-Class to encapsulate the library context and offer
  * access to the management functionality.
  *
