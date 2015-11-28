@@ -323,6 +323,10 @@ err_out:
 			if (!nm) return -ENOMEM;
 			nm->next = 0;
 			nm->node = new Lightify_Node(_ctx,node);
+			if (!nm->node) {
+				delete nm;
+				return -ENOMEM;
+			}
 
 			if (!last_inserted) {
 				_nodesmap = nm;
