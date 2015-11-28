@@ -12,3 +12,6 @@ src/.deps/
 src/tests/.deps/
 src/tools/.deps/
 autom4te.cache/
+*.o
+*.lo
+*.la
