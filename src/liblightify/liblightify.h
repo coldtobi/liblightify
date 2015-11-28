@@ -704,12 +704,14 @@ int lightify_group_request_cct(struct lightify_ctx *ctx, struct lightify_group *
 
 /** Set RGBW values
  *
- * @param ctx
+ * \note some lamps cannot set white, also white and rgb might be exclusive.
+ *
+ * @param ctx context
  * @param group
- * @param r
- * @param g
- * @param b
- * @param w
+ * @param r red
+ * @param g green
+ * @param b blue
+ * @param w white
  * @param fadetime
  * @return >=0 on success. negative on error.
  *

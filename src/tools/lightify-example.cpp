@@ -88,15 +88,13 @@ int main(void) {
 	if (err < 0) cerr << "Lightify::Open failed: " << -err << " "  << strerror(-err) << endl;
 	l.ScanNodes();
 
-	Lightify_Node *node;
-	std::map<unsigned long long, Lightify_Node*>::const_iterator it;
-	it = l.GetNodesMap().begin();
+	Lightify_Node *node = 0;
 	cout << "|-----------------|------------------|---------|-------|---------|-----|-----|------|-----|-----|-----|-----|---|" << endl;
 	cout << "| Name            | MAC              | type    | group | online  | 0/1 | dim | CCT  | Red | Grn | Blu | Wht | s |" << endl;
 	cout << "|-----------------|------------------|---------|-------|---------|-----|-----|------|-----|-----|-----|-----|---|" << endl;
 
-	for(;it != l.GetNodesMap().end(); it++) {
-		node = (*it).second;
+	for(int i = 0; i< l.GetNodesCount(); i++) {
+		node = l.GetNodeAtPosX(i);
 		cout << '|'  <<
 			setw(16) << node->GetName() << " | " <<
 		    setw(16) << hex << node->GetMAC() << " | " <<
