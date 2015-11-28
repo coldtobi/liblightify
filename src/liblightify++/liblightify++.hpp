@@ -261,7 +261,9 @@ public:
 		_sockfd = -1;
 		lightify_new(&_ctx, NULL);
 		_nodesmap = NULL;
+		_groupsmap = NULL;
 		_no_nodes = 0;
+		_no_groups = 0;
 	}
 
 	virtual ~Lightify() {
@@ -269,6 +271,7 @@ public:
 		if (_host) free(_host);
 		if (_sockfd != -1) close(_sockfd);
 		_free_nodemap();
+		_free_groupmap();
 	}
 
 	/** Open socket / prepare communication
@@ -373,6 +376,41 @@ err_out:
 
 	}
 
+	/** Scan for known groups and generate a Group object for every returned group.
+	 *
+	 * \note Scanning will invalidate all previous objects.
+	 *
+	 * \return number of detected groups, negative on error.
+	 * */
+	int ScanGroups(void) {
+		int err;
+		if (_sockfd == -1) return -EBADF;
+		_free_groupmap();
+		err = lightify_group_request_scan(_ctx);
+		if (err < 0) return err;
+
+		struct lean_groupmap *last_inserted = NULL;
+		struct lightify_group *group = NULL;
+		while ( (group = lightify_group_get_next(_ctx, group))) {
+			struct lean_groupmap *gm = new lean_groupmap();
+			if (!gm) return -ENOMEM;
+			gm->next = NULL;
+			gm-> group = new Lightify_Group(_ctx, group);
+			if (!gm->group) {
+				delete gm;
+				return -ENOMEM;
+			}
+
+			if (!last_inserted) {
+				_groupsmap = gm;
+			} else {
+				last_inserted->next = gm;
+			}
+			last_inserted = gm;
+			_no_groups++;
+		}
+		return _no_groups;
+	}
 
 	/** Get direct access to the lighitfy context
 	 *
@@ -411,6 +449,16 @@ err_out:
 		return (nm ? nm->node : NULL);
 	}
 
+	/** Get Group at Pos X
+	 *
+	 * \return pointer or NULL
+	 *
+	 */
+	Lightify_Group* GetGroupAtPosX(int pos) const {
+		if (pos >= _no_groups) return NULL;
+		struct lean_groupmap *gm = _groupsmap;
+		while(pos--) gm = gm->next;
+		return gm->group;
 	}
 
 	/** Get the library context -- for direct library access.
@@ -453,6 +501,10 @@ err_out:
 		return _no_nodes;
 	}
 
+	int GetGroupsCount(void) {
+		return _no_groups;
+	}
+
 
 private:
 	void _free_nodemap(void) {
@@ -467,6 +519,18 @@ private:
 		_no_nodes = 0;
 	}
 
+	void _free_groupmap(void) {
+		struct lean_groupmap *gmtmp, *gm = _groupsmap;
+		while (gm) {
+			gmtmp = gm->next;
+			delete gm->group;
+			delete gm;
+			gm = gmtmp;
+		}
+		_groupsmap = NULL;
+		_no_groups = 0;
+	}
+
 	struct lightify_ctx *_ctx;
 	char *_host;
 	unsigned int _port;
@@ -478,9 +542,16 @@ private:
 		Lightify_Node *node;
 	};
 
+	struct lean_groupmap {
+		struct lean_groupmap *next;
+		Lightify_Group *group;
+	};
+
 	struct lean_nodemap *_nodesmap;
+	struct lean_groupmap *_groupsmap;
 
 	int _no_nodes;
+	int _no_groups;
 };
 
 
