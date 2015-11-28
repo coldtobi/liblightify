@@ -463,7 +463,7 @@ err_out:
 
 	/** Get the library context -- for direct library access.
 	 * \warning dangerous! Avoid calls that might change e.g memory location of the node structures, like scan for nodes etc. */
-	const struct lightify_ctx *GetLightifyContext(void) {
+	const struct lightify_ctx *GetLightifyContext(void) const {
 		return _ctx;
 	}
 
