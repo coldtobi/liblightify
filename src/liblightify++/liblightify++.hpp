@@ -226,7 +226,7 @@ public:
 		}
 		_port = port;
 		_sockfd = -1;
-		lightify_new(&_ctx, 0);
+		lightify_new(&_ctx, NULL);
 		_nodesmap = NULL;
 	}
 
@@ -263,7 +263,7 @@ public:
 		if (server == NULL) {
 			// no such host
 			err = h_errno;
-            if (err>=0) err = -EHOSTUNREACH;
+			if (err >= 0) err = -EHOSTUNREACH;
 			goto err_out;
 		}
 
@@ -296,11 +296,12 @@ err_out:
 
 	/** Close the (previously) opened socket. */
 	int Close(void) {
-        int i=20;
-		if (_sockfd == -1 ) return -EBADF;
+		int i = 20;
+		if (_sockfd == -1) return -EBADF;
 		lightify_skt_setfd(_ctx, -1);
 		int err = -EINTR;
-        while(i-- && err == -EINTR) err = close(_sockfd);
+		/*  Retry interrupted system calls, but with capped iterations.*/
+		while (i-- && -EINTR == close(_sockfd));
 		_sockfd = -1;
 	}
 
