@@ -331,9 +331,9 @@ void dump_nodes_state(struct lightify_ctx *ctx) {
 	int count=0;
 	// Let's create a short table...
 	//      1234567890123456  1234567812345678
-	printf("|------------------|------------------|---------|-------|---------|-----|-----|------|-----|-----|-----|-----|---|\n");
-	printf("| Name             | MAC              | type    | group | online  | 0/1 | dim | CCT  | Red | Grn | Blu | Wht | s |\n");
-	printf("|------------------|------------------|---------|-------|---------|-----|-----|------|-----|-----|-----|-----|---|\n");
+	printf("|------------------|------------------|---------|--------|---------|-----|-----|------|-----|-----|-----|-----|---|\n");
+	printf("| Name             | MAC              | type    | group  | online  | 0/1 | dim | CCT  | Red | Grn | Blu | Wht | s |\n");
+	printf("|------------------|------------------|---------|--------|---------|-----|-----|------|-----|-----|-----|-----|---|\n");
 	struct lightify_node *node = NULL;
 
 	while (( node  = lightify_node_get_next(ctx, node))) {
@@ -341,7 +341,7 @@ void dump_nodes_state(struct lightify_ctx *ctx) {
 		printf("| %-16s |" , lightify_node_get_name(node));
 		printf(" %016llx |" , lightify_node_get_nodeadr(node));
 		printf(" %-7s |", decode_lamptype(lightify_node_get_lamptype(node)));
-		printf(" %-5d |", lightify_node_get_grpadr(node));
+		printf(" 0x%04x |", lightify_node_get_grpadr(node));
 		printf(" %-7s |", decode_online_state(lightify_node_get_onlinestate(node)));
 		printf(" %-3s |", decode_onoff_sate(lightify_node_is_on(node)));
 		printf(" %-3d |", lightify_node_get_brightness(node));
@@ -356,20 +356,22 @@ void dump_nodes_state(struct lightify_ctx *ctx) {
 	if (!count) {
 		printf("no nodes found\n");
 	}
-	printf("|------------------|------------------|---------|-------|---------|-----|-----|------|-----|-----|-----|-----|---|\n");
+	printf("|------------------|------------------|---------|--------|---------|-----|-----|------|-----|-----|-----|-----|---|\n");
 }
 
 void dump_groups(struct lightify_ctx *ctx) {
 
 	struct lightify_group *group = NULL;
-	printf("|------------------|--------|\n");
-	printf("| Group Name       | id     |\n");
-	printf("|------------------|--------|\n");
+	printf("|------------------|--------|--------|\n");
+	printf("| Group Name       | id     | mask   |\n");
+	printf("|------------------|--------|--------|\n");
 	while ((group = lightify_group_get_next(ctx,group))) {
-		printf("| %-16s | 0x%04x |\n", lightify_group_get_name(group), lightify_group_get_id(group));
+		printf("| %-16s | 0x%04x | 0x%04x |", lightify_group_get_name(group), lightify_group_get_id(group), 1 << (lightify_group_get_id(group)-1));
+		struct lightify_node *node = NULL;
+		while(node = lightify_group_get_next_node(group, node)) printf(" %s", lightify_node_get_name(node));
+		printf("\n");
 	}
-	printf("|------------------|--------|\n");
-
+	printf("|------------------|--------|--------|\n");
 }
 
 
