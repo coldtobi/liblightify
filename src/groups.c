@@ -77,6 +77,7 @@ int lightify_group_new(struct lightify_ctx *ctx, struct lightify_group **newgrou
 		g->prev = ctx_g;
 	}
 	*newgroup = g;
+	g->ctx = ctx;
 	return 0;
 }
 
