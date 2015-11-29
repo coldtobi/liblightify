@@ -146,7 +146,7 @@ LIGHTIFY_EXPORT struct lightify_group *lightify_group_get_previous(struct lighti
 // #FIXME export and document
 LIGHTIFY_EXPORT struct lightify_node *lightify_group_get_next_node(struct lightify_group *grp, struct lightify_node *lastnode) {
 	if (!grp) return NULL;
-	uint16_t grpmask = 1 << (grp->id);
+	uint16_t grpmask = 1 << (grp->id-1);
 
 	while ( (lastnode = lightify_node_get_next(grp->ctx, lastnode))) {
 		if ( grpmask & lightify_node_get_grpadr(lastnode)) return lastnode;
