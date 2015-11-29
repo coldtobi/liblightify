@@ -837,11 +837,22 @@ LIGHTIFY_EXPORT int lightify_node_request_onoff(struct lightify_ctx *ctx, struct
 	uint64_t adr = -1;
 	if (node) adr = lightify_node_get_nodeadr(node);
 
+	onoff = (onoff != 0);
 	int ret = lightify_request_set_onoff(ctx, adr, 0, onoff);
 
-	lightify_node_set_onoff(node,onoff);
-	if (ret<0) {
-		lightify_node_set_stale(node,1);
+	if (node) {
+		lightify_node_set_onoff(node,onoff);
+		if (ret<0) {
+			lightify_node_set_stale(node,1);
+		}
+	} else {
+		node = NULL;
+		while((node = lightify_node_get_next(ctx, node))) {
+			lightify_node_set_onoff(node,onoff);
+			if (ret<0) {
+				lightify_node_set_stale(node,1);
+			}
+		}
 	}
 	return ret;
 }
@@ -1044,6 +1055,7 @@ LIGHTIFY_EXPORT int lightify_group_request_scan(struct lightify_ctx *ctx) {
 LIGHTIFY_EXPORT int lightify_group_request_onoff(struct lightify_ctx *ctx, struct lightify_group *group, int onoff) {
 	if (!ctx || !group) return -EINVAL;
 
+	onoff = (onoff != 0);
 	int ret = lightify_request_set_onoff(ctx, lightify_group_get_id(group), 1, onoff);
 
 	struct lightify_node *node = NULL;

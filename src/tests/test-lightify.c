@@ -115,6 +115,33 @@ const static char turnonlight_answer_broadcast[] = {
 	0x00
 };
 
+const static char turnofflight_query_broadcast[] = {
+	0x0f, 0x00, 0x00, 0x32, 0x04, 0x00, 0x00, 0x00,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0x00
+};
+
+const static char turnofflight_answer_broadcast[] = {
+	0x12, 0x00, 0x01, 0x32, 0x04, 0x00, 0x00, 0x00,
+	0x00, 0x01, 0x00,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0x00
+};
+
+const static char turnonlight2_query_broadcast[] = {
+	0x0f, 0x00, 0x00, 0x32, 0x05, 0x00, 0x00, 0x00,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0x01
+};
+
+const static char turnonlight2_answer_broadcast[] = {
+	0x12, 0x00, 0x01, 0x32, 0x05, 0x00, 0x00, 0x00,
+	0x00, 0x01, 0x00,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	0x00
+};
+
+
 const static char turnonlight_query_node[] = {
 	0x0f, 0x00, 0x00, 0x32, 0x03, 0x00, 0x00, 0x00,
 	0x78, 0x56, 0x34, 0x12, 0xef, 0xbe, 0xad, 0xde,
@@ -130,51 +157,51 @@ const static char turnonlight_answer_node[] = {
 
 
 const static char changecct_query_node[] = {
-	0x12, 0x00, 0x00, 0x33, 0x04, 0x00, 0x00, 0x00,
+	0x12, 0x00, 0x00, 0x33, 0x06, 0x00, 0x00, 0x00,
 	0x78, 0x56, 0x34, 0x12, 0xef, 0xbe, 0xad, 0xde,
 	0x8C, 0x0A, 0x0a, 0x00
 };
 
 const static char changecct_answer_node[] = {
-	0x12, 0x00, 0x01, 0x33, 0x04, 0x00, 0x00, 0x00,
+	0x12, 0x00, 0x01, 0x33, 0x06, 0x00, 0x00, 0x00,
 	0x00, 0x01, 0x00,
 	0x78, 0x56, 0x34, 0x12, 0xef, 0xbe, 0xad, 0xde,
 	0x00
 };
 
 const static char setrgbw_query_node[] = {
-	0x14, 0x00, 0x00, 0x36, 0x05, 0x00, 0x00, 0x00,
+	0x14, 0x00, 0x00, 0x36, 0x07, 0x00, 0x00, 0x00,
 	0x78, 0x56, 0x34, 0x12, 0xef, 0xbe, 0xad, 0xde,
 	0x01, 0x02, 0x03, 0x04, 0x0a, 0x00
 };
 
 const static char setrgbw_answer_node[] = {
-	0x12, 0x00, 0x01, 0x36, 0x05, 0x00, 0x00, 0x00,
+	0x12, 0x00, 0x01, 0x36, 0x07, 0x00, 0x00, 0x00,
 	0x00, 0x01, 0x00,
 	0x78, 0x56, 0x34, 0x12, 0xef, 0xbe, 0xad, 0xde,
 	0x00
 };
 
 const static char setbright_query_node[] = {
-	0x11, 0x00, 0x00, 0x31, 0x06, 0x00, 0x00, 0x00,
+	0x11, 0x00, 0x00, 0x31, 0x08, 0x00, 0x00, 0x00,
 	0x78, 0x56, 0x34, 0x12, 0xef, 0xbe, 0xad, 0xde,
 	0x12,  0x0a, 0x00
 };
 
 const static char setbright_answer_node[] = {
-	0x12, 0x00, 0x01, 0x31, 0x06, 0x00, 0x00, 0x00,
+	0x12, 0x00, 0x01, 0x31, 0x08, 0x00, 0x00, 0x00,
 	0x00, 0x01, 0x00,
 	0x78, 0x56, 0x34, 0x12, 0xef, 0xbe, 0xad, 0xde,
 	0x00
 };
 
 const static char requpdate_query_node[] = {
-	0x0e, 0x00, 0x00, 0x68, 0x07, 0x00, 0x00, 0x00,
+	0x0e, 0x00, 0x00, 0x68, 0x09, 0x00, 0x00, 0x00,
 	0x78, 0x56, 0x34, 0x12, 0xef, 0xbe, 0xad, 0xde,
 };
 
 const static char requpdate_answer_node[] = {
-	0x1d, 0x00, 0x00, 0x68, 0x07, 0x00, 0x00, 0x00,
+	0x1d, 0x00, 0x00, 0x68, 0x09, 0x00, 0x00, 0x00,
 	0x00, 0x01, 0x00,
 	0x78, 0x56, 0x34, 0x12, 0xef, 0xbe, 0xad, 0xde,
 	0x02,
@@ -554,9 +581,40 @@ START_TEST(lightify_tst_manipulate_nodes)
 			ck_assert_int_eq(err, 0);
 
 			// check if cache has been updated.
-			err = lightify_node_is_on(lightify_node_get_next(_ctx,0));
-			ck_assert_int_eq(err, 1);
+			struct lightify_node *node = NULL;
+			while( node = lightify_node_get_next(_ctx, node)) {
+				err = lightify_node_is_on(node);
+				ck_assert_int_eq(err, 1);
+			}
 
+			// Broadcast off.
+			helper_mfs_setup_answer(mfs, turnofflight_answer_broadcast,
+					sizeof(turnofflight_answer_broadcast));
+			err = lightify_node_request_onoff(_ctx, NULL, 0);
+			if ( err < 0) {
+			   print_protocol_mismatch_write(mfs,turnofflight_query_broadcast);
+			   print_protocol_mismatch_read(mfs,turnofflight_answer_broadcast);
+			}
+
+			node = NULL;
+			while( node = lightify_node_get_next(_ctx, node)) {
+				err = lightify_node_is_on(node);
+				ck_assert_int_eq(err, 0);
+			}
+
+			// Broadcast on.
+			helper_mfs_setup_answer(mfs, turnonlight2_answer_broadcast,
+					sizeof(turnonlight2_answer_broadcast));
+		    err = lightify_node_request_onoff(_ctx, NULL, 1);
+			if ( err < 0) {
+			   print_protocol_mismatch_write(mfs,turnonlight2_query_broadcast);
+			   print_protocol_mismatch_read(mfs,turnonlight2_answer_broadcast);
+			}
+		    node = NULL;
+			while( node = lightify_node_get_next(_ctx, node)) {
+				err = lightify_node_is_on(node);
+				ck_assert_int_eq(err, 1);
+			}
 		} while(0);
 
 		// Test change CCT.
@@ -565,22 +623,9 @@ START_TEST(lightify_tst_manipulate_nodes)
 					sizeof(changecct_answer_node));
 			err = lightify_node_request_cct(_ctx, lightify_node_get_next(_ctx, NULL),
 					2700, 10);
-			ck_assert_int_eq(err, 0);
-			err = memcmp(mfs->buf_write, changecct_query_node, mfs->size_write);
-			if (err) {
-				char buf[512];
-				buf[0] = '\n';
-				buf[1] = '0';
-
-				int i = 0;
-				for (i = 0; i < mfs->size_write; i++) {
-					unsigned int one, two;
-					one = 0xff & mfs->buf_write[i];
-					two = 0xff & changecct_query_node[i];
-					sprintf(buf + strlen(buf), " %02x%c=%02x", one,
-							(one == two ? '=' : '!'), two);
-				}
-				ck_abort_msg(buf);
+			if ( err < 0) {
+			   print_protocol_mismatch_write(mfs,changecct_query_node);
+			   print_protocol_mismatch_read(mfs,changecct_answer_node);
 			}
 			ck_assert_int_eq(err, 0);
 
@@ -596,24 +641,12 @@ START_TEST(lightify_tst_manipulate_nodes)
 					sizeof(setrgbw_answer_node));
 			err = lightify_node_request_rgbw(_ctx, lightify_node_get_next(_ctx, NULL),
 					1,2,3,4,10);
-			ck_assert_int_eq(err, 0);
-			err = memcmp(mfs->buf_write, setrgbw_query_node, mfs->size_write);
-			if (err) {
-				char buf[512];
-				buf[0] = '\n';
-				buf[1] = '0';
-
-				int i = 0;
-				for (i = 0; i < mfs->size_write; i++) {
-					unsigned int one, two;
-					one = 0xff & mfs->buf_write[i];
-					two = 0xff & setrgbw_query_node[i];
-					sprintf(buf + strlen(buf), " %02x%c=%02x", one,
-							(one == two ? '=' : '!'), two);
-				}
-				ck_abort_msg(buf);
+			if ( err < 0) {
+			   print_protocol_mismatch_write(mfs,setrgbw_query_node);
+			   print_protocol_mismatch_read(mfs,setrgbw_answer_node);
 			}
 			ck_assert_int_eq(err, 0);
+
 			// Check if the cache has been updated
 			err = lightify_node_get_red(lightify_node_get_next(_ctx,0));
 			ck_assert_int_eq(err, 1);
@@ -631,24 +664,12 @@ START_TEST(lightify_tst_manipulate_nodes)
 					sizeof(setbright_answer_node));
 			err = lightify_node_request_brightness(_ctx, lightify_node_get_next(_ctx, NULL),
 					0x12,10);
-			ck_assert_int_eq(err, 0);
-			err = memcmp(mfs->buf_write, setbright_query_node, mfs->size_write);
-			if (err) {
-				char buf[512];
-				buf[0] = '\n';
-				buf[1] = '0';
-
-				int i = 0;
-				for (i = 0; i < mfs->size_write; i++) {
-					unsigned int one, two;
-					one = 0xff & mfs->buf_write[i];
-					two = 0xff & setbright_query_node[i];
-					sprintf(buf + strlen(buf), " %02x%c=%02x", one,
-							(one == two ? '=' : '!'), two);
-				}
-				ck_abort_msg(buf);
+			if ( err < 0) {
+			   print_protocol_mismatch_write(mfs,setbright_query_node);
+			   print_protocol_mismatch_read(mfs,setbright_answer_node);
 			}
 			ck_assert_int_eq(err, 0);
+
 			// Check if the cache has been updated
 			err = lightify_node_get_brightness(lightify_node_get_next(_ctx,0));
 			ck_assert_int_eq(err, 0x12);
@@ -656,28 +677,14 @@ START_TEST(lightify_tst_manipulate_nodes)
 
 		// Test updating node information
 		do {
-		helper_mfs_setup_answer(mfs, requpdate_answer_node,
-				sizeof(requpdate_answer_node));
-		err = lightify_node_request_update(_ctx, lightify_node_get_next(_ctx, NULL));
-		ck_assert_int_eq(err, 0);
-
-		err = memcmp(mfs->buf_write, requpdate_query_node, mfs->size_write);
-		if (err) {
-			char buf[512];
-			buf[0] = '\n';
-			buf[1] = '0';
-
-			int i = 0;
-			for (i = 0; i < mfs->size_write; i++) {
-				unsigned int one, two;
-				one = 0xff & mfs->buf_write[i];
-				two = 0xff & setbright_query_node[i];
-				sprintf(buf + strlen(buf), " %02x%c=%02x", one,
-						(one == two ? '=' : '!'), two);
+			helper_mfs_setup_answer(mfs, requpdate_answer_node,
+					sizeof(requpdate_answer_node));
+			err = lightify_node_request_update(_ctx, lightify_node_get_next(_ctx, NULL));
+			if ( err < 0) {
+			   print_protocol_mismatch_write(mfs,requpdate_query_node);
+			   print_protocol_mismatch_read(mfs,requpdate_answer_node);
 			}
-			ck_abort_msg(buf);
-		}
-		ck_assert_int_eq(err, 0);
+			ck_assert_int_eq(err, 0);
 
 			// Check if the cache has been updated
 			struct lightify_node* node = lightify_node_get_next(_ctx, NULL);
