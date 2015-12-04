@@ -46,6 +46,7 @@ int write_to_socket(struct lightify_ctx *ctx, unsigned char *msg, size_t size) {
 
 	int n;
 	int fd = lightify_skt_getfd(ctx);
+	if (fd < 0) return -EINVAL;
 	size_t m = size; /*<< current position */
 	struct timeval to;
 
@@ -105,6 +106,7 @@ int read_from_socket(struct lightify_ctx *ctx, unsigned char *msg, size_t size )
 	int n;
 	int i;
 	int fd = lightify_skt_getfd(ctx);
+	if (fd < 0) return -EINVAL;
 	size_t m = size;
 	struct timeval to;
 
