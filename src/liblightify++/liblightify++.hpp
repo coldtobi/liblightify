@@ -51,7 +51,8 @@
 #include <netinet/in.h>
 #include <netinet/ip.h>
 
-#define LIGHTIFY_ALLOW_THROW
+/// Enable the use of exception within this wrapper
+#undef LIGHTIFY_ALLOW_THROW
 #ifdef LIGHTIFY_ALLOW_THROW
 #include <stdexcept>
 #endif
@@ -297,6 +298,8 @@ private:
 /** Lightify-Class to encapsulate the library context and offer
  * access to the management functionality.
  *
+ * \note throws std::bad_alloc on out of memory, when exceptions enabled.
+ * (see LIGHTIFY_ALLOW_THROW)
  * */
 class Lightify {
 public:
@@ -321,11 +324,10 @@ public:
 			throw std::bad_alloc;
 		}
 #endif
-
 	}
 
 	virtual ~Lightify() {
-		lightify_free(_ctx);
+		if (_ctx) lightify_free(_ctx);
 		if (_host) free(_host);
 		if (_sockfd != -1) close(_sockfd);
 		_free_nodemap();
