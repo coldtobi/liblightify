@@ -490,7 +490,13 @@ LIGHTIFY_EXPORT int lightify_node_request_scan(struct lightify_ctx *ctx) {
 	long token;
 
 	if (!ctx) return -EINVAL;
-	if (!ctx->socket_read_fn && !ctx->socket_write_fn && ctx->socket == -1) return -EBADF;
+
+	/* if using standard I/O functions, fd must be valid. If the user overrode those function,
+	 we won't care */
+	if (ctx->socket_read_fn == read_from_socket
+			&& ctx->socket_write_fn == write_to_socket && ctx->socket < 0) {
+		return -EBADF;
+	}
 
 	/* remove old node information */
 	free_all_nodes(ctx);
@@ -975,13 +981,12 @@ LIGHTIFY_EXPORT int lightify_group_request_scan(struct lightify_ctx *ctx) {
 	int ret;
 
 	if (!ctx) return -EINVAL;
-	if (!ctx->socket_read_fn && !ctx->socket_write_fn && ctx->socket == -1) return -EBADF;
 
-	/* remove old group information */
-	struct lightify_group *group = ctx->groups;
-	while ( (group = lightify_group_get_next(ctx, NULL))) {
-		dbg(ctx, "freeing group %p.\n", group);
-		lightify_group_remove(group);
+	/* if using standard I/O functions, fd must be valid. If the user overrode those function,
+	 we won't care */
+	if (ctx->socket_read_fn == read_from_socket	&&
+			ctx->socket_write_fn == write_to_socket && ctx->socket < 0) {
+		return -EBADF;
 	}
 
 	/* remove old group information */
