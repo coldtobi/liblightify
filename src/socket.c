@@ -68,7 +68,8 @@ int write_to_socket(struct lightify_ctx *ctx, unsigned char *msg, size_t size) {
 			if (-1 == n) return -errno;
 			if (0 == (n & O_NONBLOCK)) {
 				/* short write. return what we've got done */
-				return size-m;
+				dbg(ctx, "Short write:  %d bytes written instead of %d", (int)(size - m), (int)size);
+				break;
 			}
 			/* non-blocking I/O confirmed -- setup timeout and retry when socket is ready */
 			to = lightify_skt_getiotimeout(ctx);
@@ -76,8 +77,24 @@ int write_to_socket(struct lightify_ctx *ctx, unsigned char *msg, size_t size) {
 			FD_ZERO(&myset);
 			FD_SET(fd, &myset);
 			n = select(fd, NULL, &myset, NULL, &to);
-			if (n < 0 && errno != EINTR) return -errno;
-			if (n == 0) return -ETIMEDOUT;
+			/* fd became ready to accept new bytes. */
+			if (m > 0) continue;
+			/* error handling :EINTR means repeat. */
+			if (n < 0 && errno == EINTR) continue;
+			/* all other errors: return what we've got or the error if we didn't */
+			if (n < 0 && m == size) return -errno;
+			if (n < 0) {
+				dbg(ctx, "Write error %d: %d bytes written, instead of %d", -errno, (int)(size-m), (int)size);
+				break;
+			}
+			/* no byte read at all --  timeout. */
+			if (n == 0 && m == size) {
+				/* could not write ANY byte. */
+				return -ETIMEDOUT;
+			}
+			/* timeout on partial write */
+			dbg(ctx, "Short write (timeout):  %d bytes written instead of %d", (int)(size-m), (int) size);
+			break;
 		}
 	} while (m);
 
@@ -98,7 +115,7 @@ int write_to_socket(struct lightify_ctx *ctx, unsigned char *msg, size_t size) {
 		dbg(ctx,"> %s\n",buf);
 	}
 #endif
-	return size;
+	return size-m;
 }
 
 int read_from_socket(struct lightify_ctx *ctx, unsigned char *msg, size_t size ) {
@@ -132,21 +149,34 @@ int read_from_socket(struct lightify_ctx *ctx, unsigned char *msg, size_t size )
 			if (-1 == n) return -errno;
 			if (0 == (n & O_NONBLOCK)) {
 				/* short read. return what we've got done */
-				return size-m;
+				dbg(ctx, "Short read: %d instead of %d", (int)(size-m), (int) size);
+				break; /* break out for debug message logging. */
 			}
 			to = lightify_skt_getiotimeout(ctx);
 			fd_set myset;
 			FD_ZERO(&myset);
 			FD_SET(fd, &myset);
-			i = select(fd, NULL, &myset, NULL, &to);
-			if (i < 0 && errno != EINTR) {
-				return -errno;
+			i = select(fd, &myset, NULL, NULL, &to);
+			/* fd is now ready to be read */
+			if (i > 0) continue;
+			/* error handling: Execpt interrupted system calls means we return the error */
+			if (i < 0 && errno == EINTR) continue;
+			/* return error if we did not get any byte */
+			if (i < 0 && m == size) return -errno;
+			/* return what we've got, even despite the error */
+			if (i < 0) {
+				 dbg(ctx, "Read error %d:  %d bytes read, instead of %d", -errno, (int)(size-m), (int)size);
+				 break;
 			}
-			if (m == 0 && i == 0) {
+			/* if no fd became ready, and we never saw a byte, we'll bail out with timeout */
+			if (i == 0 && m == size) {
 				return -ETIMEDOUT;
-			} else {
-				return size-m;
 			}
+			/* partial read and timeout: return what we've got so far.
+			   This will be handled by the remaining code, so we just leave a message before
+                           doing so.*/
+			dbg(ctx, "Short read (timeout):  %d instead of %d", (int)(size-m), (int)size);
+			break;
 		}
 	} while (m);
 
@@ -156,12 +186,12 @@ int read_from_socket(struct lightify_ctx *ctx, unsigned char *msg, size_t size )
 		char buf[80];
 		buf[0] = 0;
 
-		for (k = 0; k < size; k++, j++) {
+		for (k = 0; k < size-m; k++, j++) {
 			if (8 == j) {
 				dbg(ctx,"< %s\n",buf);
 				buf[0] = 0;
-				j = 0;
 			}
+				j = 0;
 			sprintf(buf + strlen(buf), " 0x%02x,", msg_[k]);
 		}
 		dbg(ctx,"< %s\n",buf);
