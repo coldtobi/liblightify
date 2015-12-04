@@ -398,7 +398,7 @@ err_out:
 		int local_socketfd = _sockfd;
 		_sockfd = -1;
 		/*  Retry interrupted system calls, but with capped iteration count.*/
-		while (--i && 0 != close(local_socketfd)); {
+		while (--i && 0 != close(local_socketfd)) {
 			if (errno != EINTR) return errno;
 		}
 		if (!i) return -EINTR;
