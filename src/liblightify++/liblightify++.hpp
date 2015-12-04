@@ -51,6 +51,11 @@
 #include <netinet/in.h>
 #include <netinet/ip.h>
 
+#define LIGHTIFY_ALLOW_THROW
+#ifdef LIGHTIFY_ALLOW_THROW
+#include <stdexcept>
+#endif
+
 class Lightify_Node {
 	friend class Lightify;
 protected:
@@ -304,11 +309,19 @@ public:
 		}
 		_port = port;
 		_sockfd = -1;
-		lightify_new(&_ctx, NULL);
+		_ctx = NULL;
 		_nodesmap = NULL;
 		_groupsmap = NULL;
 		_no_nodes = 0;
 		_no_groups = 0;
+
+		int err = lightify_new(&_ctx, NULL);
+#ifdef LIGHTIFY_ALLOW_THROW
+		if (err < 0 || !_ctx) {
+			throw std::bad_alloc;
+		}
+#endif
+
 	}
 
 	virtual ~Lightify() {
