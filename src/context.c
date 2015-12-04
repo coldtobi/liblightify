@@ -456,13 +456,28 @@ LIGHTIFY_EXPORT int lightify_new(struct lightify_ctx **ctx, void *reserved)
         return 0;
 }
 
+static void free_all_nodes(struct lightify_ctx *ctx) {
+	if (!ctx) return;
+        while(ctx->nodes) {
+		dbg(ctx, "freeing node %p.\n", ctx->nodes);
+		lightify_node_remove(ctx->nodes);
+        }
+}
+
+static void free_all_groups(struct lightify_ctx *ctx) {
+	if (!ctx) return;
+        while(ctx->groups) {
+		dbg(ctx, "freeing group %p.\n", ctx->nodes);
+		lightify_group_remove(ctx->groups);
+        }
+}
+
 LIGHTIFY_EXPORT int lightify_free(struct lightify_ctx *ctx) {
 	if (!ctx) return -EINVAL;
 
-	while(ctx->nodes) {
-		dbg(ctx, "freeing node %p.\n", ctx->nodes);
-		lightify_node_remove(ctx->nodes);
-	}
+	free_all_nodes(ctx);
+	free_all_groups(ctx);
+
 	dbg(ctx, "context %p freed.\n", ctx);
 	free(ctx);
 	return 0;
@@ -478,11 +493,7 @@ LIGHTIFY_EXPORT int lightify_node_request_scan(struct lightify_ctx *ctx) {
 	if (!ctx->socket_read_fn && !ctx->socket_write_fn && ctx->socket == -1) return -EBADF;
 
 	/* remove old node information */
-	struct lightify_node *node = ctx->nodes;
-	while ( (node = lightify_node_get_next(ctx, NULL))) {
-		dbg(ctx, "freeing node %p.\n", node);
-		lightify_node_remove(node);
-	}
+	free_all_nodes(ctx);
 
 	token = ++ctx->cnt;
 
@@ -540,8 +551,8 @@ LIGHTIFY_EXPORT int lightify_node_request_scan(struct lightify_ctx *ctx) {
 	ret = 0;
 	/* read each node..*/
 	while(no_of_nodes--) {
-		node = NULL;
 		uint64_t tmp64;
+		struct lightify_node *node = NULL;
 		n = ctx->socket_read_fn(ctx, msg, ANSWER_0x13_NODE_LENGTH);
 		if (n< 0) return n;
 		if (ANSWER_0x13_NODE_LENGTH != n ) {
@@ -957,7 +968,6 @@ LIGHTIFY_EXPORT int lightify_node_request_update(struct lightify_ctx *ctx,
 	return n;
 }
 
-// FIXME export in lightify.h and *,sym
 LIGHTIFY_EXPORT int lightify_group_request_scan(struct lightify_ctx *ctx) {
 	int n,m;
 	int no_of_grps;
@@ -973,6 +983,9 @@ LIGHTIFY_EXPORT int lightify_group_request_scan(struct lightify_ctx *ctx) {
 		dbg(ctx, "freeing group %p.\n", group);
 		lightify_group_remove(group);
 	}
+
+	/* remove old group information */
+	free_all_groups(ctx);
 
 	token = ++ctx->cnt;
 
@@ -1029,7 +1042,7 @@ LIGHTIFY_EXPORT int lightify_group_request_scan(struct lightify_ctx *ctx) {
 	ret = 0;
 	/* read each node..*/
 	while(no_of_grps--) {
-		group = NULL;
+		struct lightify_group *group = NULL;
 		n = ctx->socket_read_fn(ctx, msg, ANSWER_0x1e_GRP_LENGHT);
 		if (n< 0) return n;
 		if (ANSWER_0x1e_GRP_LENGHT != n ) {
