@@ -1,6 +1,6 @@
 # Travis CI Integration
 
-sudo: false
+sudo: required
 
 language: c++
 compiler:
@@ -9,20 +9,21 @@ compiler:
 
 script: mkdir m4 && ./autogen.sh && ./configure && make -j2 && make check
 
-#before_install:
-#  - sudo add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu/ xenial main universe"
-#  - sudo apt-get update -qq
-#  - sudo apt-get install -qq -y multiarch-support
-#  - sudo apt-get install -qq -y dpkg apt
-#  - sudo apt-get install -qq -y autoconf-archive check
+before_install:
+  - sudo add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu/ xenial main universe"
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq -y multiarch-support
+  - sudo rm /etc/dpkg/dpkg.cfg.d/multiarch
+  - sudo apt-get install -qq -y dpkg apt
+  - sudo apt-get install -qq -y autoconf-archive check
 
-addons:
-  apt:
-    sources:
-      - debian-sid
-    packages:
-     - autoconf-archive
-     - check
-     - build-essential
-     - automake
-     - autoconf
+#addons:
+#  apt:
+#    sources:
+#      - debian-sid
+#    packages:
+#     - autoconf-archive
+#     - check
+#     - build-essential
+#     - automake
+#    - autoconf
