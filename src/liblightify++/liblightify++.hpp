@@ -385,8 +385,7 @@ public:
 		return 0;
 
 err_out:
-		if (_sockfd > 0) close(_sockfd);
-		_sockfd = -1;
+		if (_sockfd > 0) Close();
 		return err;
 
 	}
@@ -396,10 +395,14 @@ err_out:
 		int i = 20;
 		if (_sockfd == -1) return -EBADF;
 		lightify_skt_setfd(_ctx, -1);
-		int err = -EINTR;
-		/*  Retry interrupted system calls, but with capped iterations.*/
-		while (i-- && -EINTR == close(_sockfd));
+		int local_socketfd = _sockfd;
 		_sockfd = -1;
+		/*  Retry interrupted system calls, but with capped iteration count.*/
+		while (--i && 0 != close(local_socketfd)); {
+			if (errno != EINTR) return errno;
+		}
+		if (!i) return -EINTR;
+		return 0;
 	}
 
 	/** Scan for nodes
