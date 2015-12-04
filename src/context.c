@@ -375,8 +375,8 @@ static int check_header_response(unsigned char *msg, unsigned long token,
 	unsigned long token2;
 	/* check the header if plausible */
 	/* check if the token we've supplied is also the returned one. */
-	token2 = msg[HEADER_REQ_ID_B0] | (msg[HEADER_REQ_ID_B1] << 8) |
-			 (msg[HEADER_REQ_ID_B1] << 16) | (msg[HEADER_REQ_ID_B1] << 24);
+	token2 = msg[HEADER_REQ_ID_B0] | (msg[HEADER_REQ_ID_B1] << 8U) |
+			 (msg[HEADER_REQ_ID_B1] << 16U) | (msg[HEADER_REQ_ID_B1] << 24U);
 	if (token != token2) return -EPROTO;
 	if (msg[HEADER_CMD] != cmd) return -EPROTO;
 	return 0;
