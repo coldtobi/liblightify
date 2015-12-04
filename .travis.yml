@@ -20,4 +20,9 @@ addons:
   apt:
     sources:
       - debian-sid
-    packages: autoconf-archive check
+    packages:
+     - autoconf-archive
+     - check
+     - build-essential
+     - automake
+     - autoconf
