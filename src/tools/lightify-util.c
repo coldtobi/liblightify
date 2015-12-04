@@ -362,16 +362,16 @@ void dump_nodes_state(struct lightify_ctx *ctx) {
 void dump_groups(struct lightify_ctx *ctx) {
 
 	struct lightify_group *group = NULL;
-	printf("|------------------|--------|--------|\n");
-	printf("| Group Name       | id     | mask   |\n");
-	printf("|------------------|--------|--------|\n");
+	printf("|------------------|----|--------|----------------\n");
+	printf("| Group Name       | id | mask   | Group members\n");
+	printf("|------------------|----|--------|----------------\n");
 	while ((group = lightify_group_get_next(ctx,group))) {
-		printf("| %-16s | 0x%04x | 0x%04x |", lightify_group_get_name(group), lightify_group_get_id(group), 1 << (lightify_group_get_id(group)-1));
+		printf("| %-16s | %-2d | 0x%04x |", lightify_group_get_name(group), lightify_group_get_id(group), 1 << (lightify_group_get_id(group)-1));
 		struct lightify_node *node = NULL;
 		while(node = lightify_group_get_next_node(group, node)) printf(" %s", lightify_node_get_name(node));
 		printf("\n");
 	}
-	printf("|------------------|--------|--------|\n");
+	printf("|------------------|----|--------|----------------\n");
 }
 
 
