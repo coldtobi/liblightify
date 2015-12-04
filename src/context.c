@@ -889,8 +889,8 @@ LIGHTIFY_EXPORT int lightify_node_request_brightness(struct lightify_ctx *ctx, s
 	if (!ctx || !node ) return -EINVAL;
 	uint64_t adr = lightify_node_get_nodeadr(node);
 	int ret = lightify_request_set_brightness(ctx, adr, 0, level, fadetime);
-
 	lightify_node_set_brightness(node, level);
+	lightify_node_set_onoff(node, level!=0);
 	if (ret<0) {
 		lightify_node_set_stale(node,1);
 	}
@@ -1106,6 +1106,7 @@ LIGHTIFY_EXPORT int lightify_group_request_brightness(struct lightify_ctx *ctx,
 	struct lightify_node *node = NULL;
 	while  ( (node = lightify_group_get_next_node(group,node))) {
 		lightify_node_set_brightness(node, level);
+		lightify_node_set_onoff(node, level!=0);
 		if (ret < 0 ) lightify_node_set_stale(node, 1);
 	}
 	return ret;
