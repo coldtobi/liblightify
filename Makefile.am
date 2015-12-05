@@ -1,12 +1,23 @@
+include $(top_srcdir)/doxygen-include.am
+
 EXTRA_DIST = doc/protocol.txt Doxyfile
+if DX_COND_doc
+EXTRA_DIST += doc/doxygen
+endif DX_COND_doc
 CLEANFILES =
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
 AM_MAKEFLAGS = --no-print-directory
 
 clean-local:
-	-rm -rf doc/doxygen/
+	-rm -rf doc/doxygen/*
 
-include $(top_srcdir)/doxygen-include.am
+doxygen-prepare:
+	mkdir -p doc/doxygen
+
+# add doxygen if doxygen is available
+if DX_COND_doc
+all: doxygen-prepare doxygen-doc
+endif DX_COND_doc
 
 AM_CPPFLAGS = \
 	-include $(top_builddir)/config.h \
