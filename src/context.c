@@ -91,7 +91,8 @@ enum msg_0x13_answer_node {
 	ANSWER_0x13_NODE_B,
 	ANSWER_0x13_NODE_W,
 	ANSWER_0x13_NODE_NAME_START,
-	ANSWER_0x13_NODE_LENGTH = 42
+	ANSWER_0x13_UNKNOWN6 = 42,
+	ANSWER_0x13_NODE_LENGTH = 50
 };
 
 enum msg_0x31_query {
@@ -453,6 +454,8 @@ LIGHTIFY_EXPORT int lightify_new(struct lightify_ctx **ctx, void *reserved)
 		c->socket_read_fn = read_from_socket;
 		c->socket_write_fn = write_to_socket;
 
+		c->gw_protocol_version = -1;
+
         return 0;
 }
 
@@ -487,6 +490,7 @@ LIGHTIFY_EXPORT int lightify_node_request_scan(struct lightify_ctx *ctx) {
 	int ret;
 	int n,m;
 	int no_of_nodes;
+	int read_size = 0;
 	long token;
 
 	if (!ctx) return -EINVAL;
@@ -505,7 +509,7 @@ LIGHTIFY_EXPORT int lightify_node_request_scan(struct lightify_ctx *ctx) {
 
 	/* to avoid problems with packing, we need to use a char array.
 	 * to assist we'll have this fine enum */
-	uint8_t msg[42];
+	uint8_t msg[ANSWER_0x13_NODE_LENGTH+2];
 
 	/* 0x13 command to get all node's informations. */
 	fill_telegram_header(msg, QUERY_0x13_SIZE, token, 0x00, 0x13);
@@ -542,11 +546,24 @@ LIGHTIFY_EXPORT int lightify_node_request_scan(struct lightify_ctx *ctx) {
 
 	/* check if the message length is as expected */
 	no_of_nodes = msg[ANSWER_0x13_NODESCNT_LSB] | (msg[ANSWER_0x13_NODESCNT_MSB] <<8);
+
+	if (!no_of_nodes) return 0;
+
 	m = msg[HEADER_LEN_LSB] | (msg[HEADER_LEN_MSB] << 8);
 	/*info(ctx, "0x13: received %d bytes\n",m);*/
-	if ( no_of_nodes * ANSWER_0x13_NODE_LENGTH + ANSWER_0x13_SIZE - 2 != m) {
-		info(ctx, "Reponse len unexpected for %d nodes: %d!=%d.\n", no_of_nodes,
-				no_of_nodes * ANSWER_0x13_NODE_LENGTH + ANSWER_0x13_SIZE - 2, m);
+
+	m -= ANSWER_0x13_SIZE - 2 ;
+	if (m == ANSWER_0x13_NODE_LENGTH * no_of_nodes) {
+		ctx->gw_protocol_version = GW_PROT_1512;
+		read_size = ANSWER_0x13_NODE_LENGTH;
+		dbg(ctx, "0x13: Dec-15 GW protocol\n");
+
+	} else if (m == ANSWER_0x13_UNKNOWN6 * no_of_nodes ){
+		ctx->gw_protocol_version = GW_PROT_OLD;
+		read_size = ANSWER_0x13_UNKNOWN6;
+		dbg(ctx, "0x13: Old GW protocol\n");
+	} else {
+		info(ctx, "Reponse len unexpected for %d nodes: %d.\n", no_of_nodes, m);
 		return -EPROTO;
 	}
 
@@ -559,10 +576,10 @@ LIGHTIFY_EXPORT int lightify_node_request_scan(struct lightify_ctx *ctx) {
 	while(no_of_nodes--) {
 		uint64_t tmp64;
 		struct lightify_node *node = NULL;
-		n = ctx->socket_read_fn(ctx, msg, ANSWER_0x13_NODE_LENGTH);
+		n = ctx->socket_read_fn(ctx, msg, read_size);
 		if (n< 0) return n;
-		if (ANSWER_0x13_NODE_LENGTH != n ) {
-			info(ctx,"read node info: short read %d!=%d\n", ANSWER_0x13_NODE_LENGTH, n);
+		if (read_size != n ) {
+			info(ctx,"read node info: short read %d!=%d\n", read_size, n);
 			return -EIO;
 		}
 

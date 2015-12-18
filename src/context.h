@@ -46,6 +46,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/time.h>
 #include <stdarg.h>
 
+/* Protocol versions */
+#define GW_PROT_OLD  (0)
+/* seen dec 2015 */
+#define GW_PROT_1512 (0x1512)
+
 /**
  * SECTION:liblightify
  * @short_description: liblightify context
@@ -92,6 +97,10 @@ struct lightify_ctx {
 
 	/** timeout for IO */
 	struct timeval iotimeout;
+
+	/** detected protocol variant */
+	int gw_protocol_version;
+
 };
 
 #endif /* SRC_LIBCONTEXT_H_ */

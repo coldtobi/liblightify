@@ -190,8 +190,8 @@ int read_from_socket(struct lightify_ctx *ctx, unsigned char *msg, size_t size )
 			if (8 == j) {
 				dbg(ctx,"< %s\n",buf);
 				buf[0] = 0;
-			}
 				j = 0;
+			}
 			sprintf(buf + strlen(buf), " 0x%02x,", msg_[k]);
 		}
 		dbg(ctx,"< %s\n",buf);
