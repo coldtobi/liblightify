@@ -92,6 +92,13 @@ enum msg_0x13_answer_node {
 	ANSWER_0x13_NODE_W,
 	ANSWER_0x13_NODE_NAME_START,
 	ANSWER_0x13_UNKNOWN6 = 42,
+	ANSWER_0x13_UNKNOWN7,
+	ANSWER_0x13_UNKNOWN8,
+	ANSWER_0x13_UNKNOWN9,
+	ANSWER_0x13_UNKNOWN10,
+	ANSWER_0x13_UNKNOWN11,
+	ANSWER_0x13_UNKNOWN12,
+	ANSWER_0x13_UNKNOWN13,
 	ANSWER_0x13_NODE_LENGTH = 50
 };
 
@@ -598,32 +605,66 @@ LIGHTIFY_EXPORT int lightify_node_request_scan(struct lightify_ctx *ctx) {
 		info(ctx, "new node: %s\n", lightify_node_get_name(node));
 
 		n = msg[ANSWER_0x13_NODE_NODETYPE];
-		switch (n) {
-		case 0x00 : // Plug
-			lightify_node_set_lamptype(node, LIGHTIFY_ONOFF_PLUG);
-			break;
-		case 0x02 : // CCT light
-			lightify_node_set_lamptype(node, LIGHTIFY_CCT_LIGHT);
-			break;
-		case 0x04 : // dimable
-			lightify_node_set_lamptype(node, LIGHTIFY_DIMABLE_LIGHT);
-			break;
-		case 0x08 : // RGB
-			lightify_node_set_lamptype(node, LIGHTIFY_COLOUR_LIGHT);
-			break;
-		case 0x0a : // CCT, RGB
-			lightify_node_set_lamptype(node, LIGHTIFY_EXT_COLOUR_LIGHT);
-			break;
-		default: // maybe the missing dimmer plug or on/off light.
-			lightify_node_set_lamptype(node, LIGHTIFY_UNKNOWNTYPE | n );
-			dbg(ctx, "unknown type %x for lamp %s. PLEASE REPORT A BUG AGAINST liblightify. \n",n, lightify_node_get_name(node));
-			break;
+
+		if (ctx->gw_protocol_version == GW_PROT_OLD) {
+			switch (n) {
+			case 0x00 : // Plug
+				lightify_node_set_lamptype(node, LIGHTIFY_ONOFF_PLUG);
+				break;
+			case 0x02 : // CCT light
+				lightify_node_set_lamptype(node, LIGHTIFY_CCT_LIGHT);
+				break;
+			case 0x04 : // dimable
+				lightify_node_set_lamptype(node, LIGHTIFY_DIMABLE_LIGHT);
+				break;
+			case 0x08 : // RGB
+				lightify_node_set_lamptype(node, LIGHTIFY_COLOUR_LIGHT);
+				break;
+			case 0x0a : // CCT, RGB
+				lightify_node_set_lamptype(node, LIGHTIFY_EXT_COLOUR_LIGHT);
+				break;
+			default: // maybe the missing dimmer plug or on/off light.
+				lightify_node_set_lamptype(node, LIGHTIFY_UNKNOWNTYPE | n );
+				dbg(ctx, "unknown type %x for lamp %s. PLEASE REPORT A BUG AGAINST liblightify.\n",n, lightify_node_get_name(node));
+				break;
+			}
+		} else {
+			 /* new gateway firmware (Dec 2015) returns different values.
+			  * remap to avoid API Bump. */
+			switch (n) {
+			case 0x10 : // Plug
+				lightify_node_set_lamptype(node, LIGHTIFY_ONOFF_PLUG);
+				break;
+			case 0x00 : // CCT light
+				lightify_node_set_lamptype(node, LIGHTIFY_CCT_LIGHT);
+				break;
+			case 0x04 : // dimable
+				lightify_node_set_lamptype(node, LIGHTIFY_DIMABLE_LIGHT);
+				break;
+			case 0x08 : // RGB
+				lightify_node_set_lamptype(node, LIGHTIFY_COLOUR_LIGHT);
+				break;
+			case 0x0a : // CCT, RGB
+				lightify_node_set_lamptype(node, LIGHTIFY_EXT_COLOUR_LIGHT);
+				break;
+			default: // maybe the missing dimmer plug or on/off light.
+				lightify_node_set_lamptype(node, LIGHTIFY_UNKNOWNTYPE | n );
+				dbg(ctx, "unknown type %x for lamp %s. PLEASE REPORT A BUG AGAINST liblightify.\n",n, lightify_node_get_name(node));
+				break;
+			}
 		}
 
 		dbg(ctx, "xtra-data: %x -- %x %x %x %x\n", msg[ANSWER_0x13_UNKNOWN1],
 				msg[ANSWER_0x13_UNKNOWN2],msg[ANSWER_0x13_UNKNOWN3],
 				msg[ANSWER_0x13_UNKNOWN4],msg[ANSWER_0x13_UNKNOWN5]);
 
+		if (ctx->gw_protocol_version == GW_PROT_1512) {
+			dbg(ctx, "xtra-data-new-prot: %x %x %x %x %x %x %x %x\n", msg[ANSWER_0x13_UNKNOWN6],
+					msg[ANSWER_0x13_UNKNOWN7],msg[ANSWER_0x13_UNKNOWN8],
+					msg[ANSWER_0x13_UNKNOWN9],msg[ANSWER_0x13_UNKNOWN10],
+					msg[ANSWER_0x13_UNKNOWN11],msg[ANSWER_0x13_UNKNOWN12],
+					msg[ANSWER_0x13_UNKNOWN13]);
+		}
 
 		lightify_node_set_red(node, msg[ANSWER_0x13_NODE_R]);
 		lightify_node_set_green(node, msg[ANSWER_0x13_NODE_G]);
