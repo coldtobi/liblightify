@@ -253,7 +253,7 @@ enum msg_0x68_answer {
 	ANSWER_0x68_NODEADR64_B5,
 	ANSWER_0x68_NODEADR64_B6,
 	ANSWER_0x68_NODEADR64_B7,
-	ANSWER_0x68_UNKNOWN1,
+	ANSWER_0x68_REQUEST_STATUS,
 	ANSWER_0x68_ONLINESTATE,
 	ANSWER_0x68_ONOFF,
 	ANSWER_0x68_DIM_LEVEL,
@@ -263,6 +263,9 @@ enum msg_0x68_answer {
 	ANSWER_0x68_G,
 	ANSWER_0x68_B,
 	ANSWER_0x68_W,
+	ANSWER_0x68_UNKNOWN2,
+	ANSWER_0x68_UNKNOWN3,
+	ANSWER_0x68_UNKNOWN4,
 	ANSWER_0x68_SIZE
 };
 
@@ -976,8 +979,11 @@ LIGHTIFY_EXPORT int lightify_node_request_brightness(struct lightify_ctx *ctx, s
 
 LIGHTIFY_EXPORT int lightify_node_request_update(struct lightify_ctx *ctx,
 		struct lightify_node *node) {
-	unsigned char msg[32];
+
+	unsigned char msg[ANSWER_0x68_SIZE+2];
 	int n;
+	int read_size;
+
 	if (!ctx) return -EINVAL;
 	if (!node)return -EINVAL;
 
@@ -996,14 +1002,15 @@ LIGHTIFY_EXPORT int lightify_node_request_update(struct lightify_ctx *ctx,
 		return -EIO;
 	}
 
-	/* read the header */
-	n = ctx->socket_read_fn(ctx,msg,ANSWER_0x68_SIZE);
+
+	/* read the header incl. no of nodes and the byte that seems to be the status */
+	n = ctx->socket_read_fn(ctx,msg, ANSWER_0x68_ONLINESTATE);
 	if (n < 0) {
 		info(ctx,"socket_read_fn error %d\n", n);
 		return n;
 	}
-	if (n != ANSWER_0x68_SIZE) {
-		info(ctx,"short read %d!=%d\n", ANSWER_0x68_SIZE, n);
+	if (n != ANSWER_0x68_ONLINESTATE) {
+		info(ctx,"header short read %d!=%d\n", ANSWER_0x68_ONLINESTATE, n);
 		return -EIO;
 	}
 
@@ -1013,8 +1020,35 @@ LIGHTIFY_EXPORT int lightify_node_request_update(struct lightify_ctx *ctx,
 		return n;
 	}
 
-	/* check if the node adress was echoed properly */
+	/* no of nodes must be 1*/
+	n = msg[ANSWER_0x68_NONODES_MSB] <<8U | msg[ANSWER_0x68_NONODES_LSB];
+	if (n != 1) return -EPROTO;
+
+	/* check if the node address was echoed properly */
 	if (node_adr != uint64_from_msg(&msg[ANSWER_0x68_NODEADR64_B0])) return -EPROTO;
+
+	if (msg[ANSWER_0x68_REQUEST_STATUS] != 0) {
+		/* not did not answer or some other error occurred (?) */
+		lightify_node_set_stale(node, 1);
+		return -ENODATA;
+	}
+
+	if (ctx->gw_protocol_version == GW_PROT_OLD) {
+		read_size = ANSWER_0x68_UNKNOWN2-ANSWER_0x68_ONLINESTATE;
+	} else {
+		read_size = ANSWER_0x68_SIZE-ANSWER_0x68_ONLINESTATE;
+	}
+
+	n = ctx->socket_read_fn(ctx,&msg[ANSWER_0x68_ONLINESTATE],read_size);
+	if (n < 0) {
+		info(ctx,"socket_read_fn error %d\n", n);
+		return n;
+	}
+	if (n != read_size) {
+		info(ctx,"body short read %d!=%d\n", read_size, n);
+		return -EIO;
+	}
+
 
 	/* update node information */
 	lightify_node_set_online_status(node,msg[ANSWER_0x68_ONLINESTATE]);
