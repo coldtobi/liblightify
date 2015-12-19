@@ -68,6 +68,7 @@ static struct option long_options[] = {
 { "wait", required_argument, 0, 'w' },
 { "list-groups", no_argument, 0, 2},
 { "group", required_argument, 0, 'g' },
+{ "update", no_argument, 0, 'u' },
 { 0, 0, 0, 0 }
 };
 /* getopt_long stores the option index here. */
@@ -117,7 +118,9 @@ void usage(char *argv[]) {
 	printf("    [--level,-l <value>] Set intensity level. Range 0 to 100\n");
 	printf("    [--cct,-c <value>]   CCT to be set.\n");
 	printf("    [--rgbw,-r <value>]  Set color. Give color as r,g,b,w. Color values from 0 to 255\n");
+	printf("    [--update,-u]        Refresh a node's information (requires name set before)\n");
 	printf("\n Host must be given before any command. Commands on and off can broadcast to all lamps if name is not given before.\n");
+	printf("\n All other commands needs either a name or group set before.\n");
 }
 
 struct lightify_node* find_node_per_name(struct lightify_ctx *ctx, const char *name) {
@@ -143,7 +146,6 @@ struct lightify_group* find_grp_per_name(struct lightify_ctx *ctx, const char *n
 	fprintf(stderr, "ERROR: Group %s not found\n", name);
 	return NULL;
 }
-
 
 void command_set_0_1(struct lightify_ctx *ctx, int command_on) {
 	struct lightify_node *node = find_node_per_name(ctx,name_data);;
@@ -230,6 +232,15 @@ void command_set_lvl(struct lightify_ctx *ctx) {
 	if (verbose_flag) {
 		printf("%s %s brightness %d in time %d\n", type, name, command_l_data, fadetime);
 	}
+}
+
+void command_update_node(struct lightify_ctx *ctx) {
+	struct lightify_node *node = find_node_per_name(ctx,name_data);
+	if (!node) {
+		return;
+	}
+	int ret = lightify_node_request_update(ctx,node);
+	printf("update_node ret=%d\n", ret);
 }
 
 void setup_connection(struct lightify_ctx *ctx) {
@@ -392,7 +403,7 @@ int main(int argc, char *argv[]) {
 
 
 	while (1) {
-		c = getopt_long(argc, argv, "dc:r:l:n:h:p:01t:w:g:", long_options,
+		c = getopt_long(argc, argv, "dc:r:l:n:h:p:01t:w:g:u", long_options,
 				&option_index);
 		if (c == -1)
 			break;
@@ -494,6 +505,12 @@ int main(int argc, char *argv[]) {
 			if (!gonnected) setup_connection(ctx);
 			group_data = optarg;
 			name_data = NULL;
+			break;
+		}
+
+		case 'u': {
+			if (!gonnected || !name_data) { usage(argv); exit(1); }
+			command_update_node(ctx);
 			break;
 		}
 
