@@ -204,8 +204,8 @@ const static char requpdate_answer_node[] = {
 	0x1d, 0x00, 0x00, 0x68, 0x09, 0x00, 0x00, 0x00,
 	0x00, 0x01, 0x00,
 	0x78, 0x56, 0x34, 0x12, 0xef, 0xbe, 0xad, 0xde,
-	0x02,
-	0x00, 0x01, 0x55, 0x8C, 0x0A, 0x10, 0x11, 0x12, 0x13
+	0x00,
+	0x02, 0x01, 0x55, 0x8C, 0x0A, 0x10, 0x11, 0x12, 0x13
 };
 
 
@@ -685,10 +685,9 @@ START_TEST(lightify_tst_manipulate_nodes)
 			   print_protocol_mismatch_read(mfs,requpdate_answer_node);
 			}
 			ck_assert_int_eq(err, 0);
-
 			// Check if the cache has been updated
 			struct lightify_node* node = lightify_node_get_next(_ctx, NULL);
-			ck_assert_int_eq(lightify_node_get_onlinestate(node),0);
+			ck_assert_int_eq(lightify_node_get_onlinestate(node),2);
 			ck_assert_int_eq(lightify_node_is_on(node),0x01);
 			ck_assert_int_eq(lightify_node_get_brightness(node), 0x55);
 			ck_assert_int_eq(lightify_node_get_cct(node),0xa8c);
