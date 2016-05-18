@@ -908,7 +908,6 @@ static int lightify_request_set_brightness(struct lightify_ctx *ctx, uint64_t ad
 	return n;
 }
 
-
 /* Node control */
 LIGHTIFY_EXPORT int lightify_node_request_onoff(struct lightify_ctx *ctx, struct lightify_node *node, int onoff) {
 	if (!ctx) return -EINVAL;
@@ -975,8 +974,6 @@ LIGHTIFY_EXPORT int lightify_node_request_brightness(struct lightify_ctx *ctx, s
 	return ret;
 }
 
-
-
 LIGHTIFY_EXPORT int lightify_node_request_update(struct lightify_ctx *ctx,
 		struct lightify_node *node) {
 
@@ -1002,7 +999,6 @@ LIGHTIFY_EXPORT int lightify_node_request_update(struct lightify_ctx *ctx,
 		return -EIO;
 	}
 
-
 	/* read the header incl. no of nodes and the byte that seems to be the status */
 	n = ctx->socket_read_fn(ctx,msg, ANSWER_0x68_ONLINESTATE);
 	if (n < 0) {
@@ -1022,13 +1018,21 @@ LIGHTIFY_EXPORT int lightify_node_request_update(struct lightify_ctx *ctx,
 
 	/* no of nodes must be 1*/
 	n = msg[ANSWER_0x68_NONODES_MSB] <<8U | msg[ANSWER_0x68_NONODES_LSB];
-	if (n != 1) return -EPROTO;
+	if (n != 1) {
+		dbg_proto(ctx, "Node count expected 1 but is %u\n", (unsigned int)n);
+		return -EPROTO;
+	}
 
 	/* check if the node address was echoed properly */
-	if (node_adr != uint64_from_msg(&msg[ANSWER_0x68_NODEADR64_B0])) return -EPROTO;
+	if (node_adr != uint64_from_msg(&msg[ANSWER_0x68_NODEADR64_B0])) {
+		dbg_proto(ctx, "Node address not matching! %lx != %lx\n",
+			node_adr,  uint64_from_msg(&msg[ANSWER_0x68_NODEADR64_B0]));
+		return -EPROTO;
+	}
 
 	if (msg[ANSWER_0x68_REQUEST_STATUS] != 0) {
-		/* not did not answer or some other error occurred (?) */
+		/* node did not answer or some other error occurred (?) */
+		dbg_proto(ctx, "Node Status not equal 0 but %u\n",msg[ANSWER_0x68_REQUEST_STATUS]);
 		lightify_node_set_stale(node, 1);
 		return -ENODATA;
 	}
@@ -1048,7 +1052,6 @@ LIGHTIFY_EXPORT int lightify_node_request_update(struct lightify_ctx *ctx,
 		info(ctx,"body short read %d!=%d\n", read_size, n);
 		return -EIO;
 	}
-
 
 	/* update node information */
 	lightify_node_set_online_status(node,msg[ANSWER_0x68_ONLINESTATE]);
@@ -1076,7 +1079,7 @@ LIGHTIFY_EXPORT int lightify_group_request_scan(struct lightify_ctx *ctx) {
 
 	/* if using standard I/O functions, fd must be valid. If the user overrode those function,
 	 we won't care */
-	if (ctx->socket_read_fn == read_from_socket	&&
+	if (ctx->socket_read_fn == read_from_socket &&
 			ctx->socket_write_fn == write_to_socket && ctx->socket < 0) {
 		return -EBADF;
 	}

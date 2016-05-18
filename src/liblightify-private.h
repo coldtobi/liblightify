@@ -54,12 +54,18 @@ lightify_log_null(struct lightify_ctx *ctx, const char *format, ...) {}
 #  else
 #    define dbg(ctx, arg...) lightify_log_null(ctx, ## arg)
 #  endif
+#  ifdef ENABLE_DEBUG_PROTO
+#    define dbg_proto(ctx,arg...) lightify_log_cond(ctx, LOG_DEBUG, ## arg)
+#  else
+#    define dbg_proto(ctx,arg...) lightify_log_null(ctx, ## arg)
+#  endif
 #  define info(ctx, arg...) lightify_log_cond(ctx, LOG_INFO, ## arg)
 #  define err(ctx, arg...) lightify_log_cond(ctx, LOG_ERR, ## arg)
 #else
 #  define dbg(ctx, arg...) lightify_log_null(ctx, ## arg)
 #  define info(ctx, arg...) lightify_log_null(ctx, ## arg)
 #  define err(ctx, arg...) lightify_log_null(ctx, ## arg)
+#  define dbg_proto(ctx,arg...) lightify_log_null(ctx, ## arg)
 #endif
 
 #ifndef HAVE_SECURE_GETENV
