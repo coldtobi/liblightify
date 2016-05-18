@@ -16,7 +16,7 @@ doxygen-prepare:
 
 # add doxygen if doxygen is available
 if DX_COND_doc
-all: doxygen-prepare doxygen-doc
+docs: doxygen-prepare doxygen-doc
 endif DX_COND_doc
 
 AM_CPPFLAGS = \
