@@ -47,6 +47,14 @@ AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
 AC_CONFIG_MACRO_DIR([m4])
 
+AC_ARG_ENABLE([debugmsg],
+    AS_HELP_STRING([--enable-debugmsg],
+      [build with additional debugging messages. Do not use for production mode.@<:@default=disabled@:>@]),
+      [], enable_debugmsg=yes)
+AS_IF([test "x$enable_debugmsg" = "xyes"], [
+        AC_DEFINE(ENABLE_DEBUG_MSGS, [1], [Extra debug messages.])
+])
+
 LT_INIT([
 	disable-static
 	pic-only
