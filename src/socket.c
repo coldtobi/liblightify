@@ -50,7 +50,7 @@ int write_to_socket(struct lightify_ctx *ctx, unsigned char *msg, size_t size) {
 	size_t m = size; /*<< current position */
 	struct timeval to;
 
-#ifdef ENABLE_DEBUG
+#ifdef ENABLE_DEBUG_MSGS
 	unsigned char *msg_ = msg;
 #endif
 
@@ -98,7 +98,7 @@ int write_to_socket(struct lightify_ctx *ctx, unsigned char *msg, size_t size) {
 		}
 	} while (m);
 
-#ifdef ENABLE_DEBUG
+#ifdef ENABLE_DEBUG_MSGS
 	if (lightify_get_log_priority(ctx) >= LOG_DEBUG) {
 		unsigned int j = 0, k;
 		char buf[80];
@@ -127,7 +127,7 @@ int read_from_socket(struct lightify_ctx *ctx, unsigned char *msg, size_t size )
 	size_t m = size;
 	struct timeval to;
 
-#ifdef ENABLE_DEBUG
+#ifdef ENABLE_DEBUG_MSGS
 	unsigned char *msg_ = msg;
 #endif
 
@@ -180,7 +180,7 @@ int read_from_socket(struct lightify_ctx *ctx, unsigned char *msg, size_t size )
 		}
 	} while (m);
 
-#ifdef ENABLE_DEBUG
+#ifdef ENABLE_DEBUG_MSGS
 	if (lightify_get_log_priority(ctx) >= LOG_DEBUG) {
 		unsigned int j = 0, k;
 		char buf[80];
