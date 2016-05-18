@@ -47,21 +47,40 @@ AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
 AC_CONFIG_MACRO_DIR([m4])
 
+# Debug messages are only emitted when logging is enabled (default)
+# and verbosity is set accordingly.
+# verbosity can be set via the enviorment by exporting lightify_LOG
+# to "err", "info" and "debug".
+# alternatively, verbosity can be adjusted by the API: see lightify_set_log_priority()
+
+# Some extra verbose debug messages, which goes over the ENABLE_DEBUG below
+# (For example, enables protocol dump when using standard I/O handlers)
 AC_ARG_ENABLE([debugmsg],
     AS_HELP_STRING([--enable-debugmsg],
       [build with additional debugging messages. Do not use for production mode.@<:@default=disabled@:>@]),
-      [], enable_debugmsg=yes)
+      enable_debugmsg=yes)
 AS_IF([test "x$enable_debugmsg" = "xyes"], [
         AC_DEFINE(ENABLE_DEBUG_MSGS, [1], [Extra debug messages.])
 ])
 
+# Some extra verbose messages, emitted during protocol checks. Aims to help debugging why some message
+# or answer has been rejected.
 AC_ARG_ENABLE([debugprotocol],
     AS_HELP_STRING([--enable-debugprotocol],
       [build with very verbose protocol debugging. Do not use for production mode.@<:@default=disabled@:>@]),
-      [], enable_debugprotocol=yes)
+      enable_debugprotocol=yes)
 AS_IF([test "x$enable_debugprotocol" = "xyes"], [
         AC_DEFINE(ENABLE_DEBUG_PROTO, [1], [Extra verbose protocol debug messages.])
 ])
+
+# General debugging messages, not in the above criterias.
+AC_ARG_ENABLE([debug],
+        AS_HELP_STRING([--enable-debug], [enable debug messages @<:@default=disabled@:>@]),
+        [], [enable_debug=no])
+AS_IF([test "x$enable_debug" = "xyes"], [
+        AC_DEFINE(ENABLE_DEBUG, [1], [Debug messages.])
+])
+
 
 
 LT_INIT([
@@ -78,13 +97,6 @@ AC_ARG_ENABLE([logging],
         [], enable_logging=yes)
 AS_IF([test "x$enable_logging" = "xyes"], [
         AC_DEFINE(ENABLE_LOGGING, [1], [System logging.])
-])
-
-AC_ARG_ENABLE([debug],
-        AS_HELP_STRING([--enable-debug], [enable debug messages @<:@default=disabled@:>@]),
-        [], [enable_debug=no])
-AS_IF([test "x$enable_debug" = "xyes"], [
-        AC_DEFINE(ENABLE_DEBUG, [1], [Debug messages.])
 ])
 
 AC_CHECK_FUNCS([ \
