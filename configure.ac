@@ -55,6 +55,15 @@ AS_IF([test "x$enable_debugmsg" = "xyes"], [
         AC_DEFINE(ENABLE_DEBUG_MSGS, [1], [Extra debug messages.])
 ])
 
+AC_ARG_ENABLE([debugprotocol],
+    AS_HELP_STRING([--enable-debugprotocol],
+      [build with very verbose protocol debugging. Do not use for production mode.@<:@default=disabled@:>@]),
+      [], enable_debugprotocol=yes)
+AS_IF([test "x$enable_debugprotocol" = "xyes"], [
+        AC_DEFINE(ENABLE_DEBUG_PROTO, [1], [Extra verbose protocol debug messages.])
+])
+
+
 LT_INIT([
 	disable-static
 	pic-only
