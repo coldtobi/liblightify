@@ -78,7 +78,7 @@ int write_to_socket(struct lightify_ctx *ctx, unsigned char *msg, size_t size) {
 			FD_SET(fd, &myset);
 			n = select(fd, NULL, &myset, NULL, &to);
 			/* fd became ready to accept new bytes. */
-			if (m > 0) continue;
+			if (n > 0) continue;
 			/* error handling :EINTR means repeat. */
 			if (n < 0 && errno == EINTR) continue;
 			/* all other errors: return what we've got or the error if we didn't */
