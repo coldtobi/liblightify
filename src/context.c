@@ -366,7 +366,7 @@ static uint16_t uint16_from_msg(uint8_t *msg) {
  * @param command to be put into the command field.
  *
  */
-static void fill_telegram_header(unsigned char *msg, unsigned int len, unsigned long token, unsigned char flags, unsigned char command)
+static void fill_telegram_header(unsigned char *msg, unsigned int len, uint32_t token, unsigned char flags, unsigned char command)
 {
 	len-=2;
 	msg[HEADER_LEN_LSB] = len & 0xff;
@@ -380,10 +380,10 @@ static void fill_telegram_header(unsigned char *msg, unsigned int len, unsigned 
 }
 
 
-static int check_header_response(unsigned char *msg, unsigned long token,
+static int check_header_response(unsigned char *msg, uint32_t token,
 		unsigned char cmd) {
 
-	unsigned long token2;
+	uint32_t token2;
 	/* check the header if plausible */
 	/* check if the token we've supplied is also the returned one. */
 	token2 = msg[HEADER_REQ_ID_B0] | (msg[HEADER_REQ_ID_B1] << 8U) |
@@ -480,7 +480,7 @@ static void free_all_nodes(struct lightify_ctx *ctx) {
 static void free_all_groups(struct lightify_ctx *ctx) {
 	if (!ctx) return;
         while(ctx->groups) {
-		dbg(ctx, "freeing group %p.\n", ctx->nodes);
+		dbg(ctx, "freeing group %p.\n", ctx->groups);
 		lightify_group_remove(ctx->groups);
         }
 }
@@ -501,7 +501,7 @@ LIGHTIFY_EXPORT int lightify_node_request_scan(struct lightify_ctx *ctx) {
 	int n,m;
 	int no_of_nodes;
 	int read_size = 0;
-	long token;
+	uint32_t token;
 
 	if (!ctx) return -EINVAL;
 
@@ -692,7 +692,7 @@ static int lightify_request_set_onoff(struct lightify_ctx *ctx, uint64_t adr, in
 	onoff = (onoff != 0);
 	isgroup = (isgroup) ? 2 : 0;
 
-	long token = ++ctx->cnt;
+	uint32_t token = ++ctx->cnt;
 	fill_telegram_header(msg, QUERY_0x32_SIZE, token, isgroup, 0x32);
 
 	msg_from_uint64(&msg[QUERY_0x32_NODEADR64_B0], adr);
@@ -751,7 +751,7 @@ static int lightify_request_set_cct(struct lightify_ctx *ctx, uint64_t adr, int 
 	int n;
 	if (!ctx) return -EINVAL;
 
-	long token = ++ctx->cnt;
+	uint32_t token = ++ctx->cnt;
 	isgroup = (isgroup) ? 2 : 0;
 	fill_telegram_header(msg, QUERY_0x33_SIZE, token, isgroup, 0x33);
 	msg_from_uint64(&msg[QUERY_0x33_NODEADR64_B0], adr);
@@ -807,7 +807,7 @@ static int lightify_request_set_rgbw(struct lightify_ctx *ctx, uint64_t adr,
 	if (!ctx) return -EINVAL;
 	/* does not support broadcast. */
 
-	long token = ++ctx->cnt;
+	uint32_t token = ++ctx->cnt;
 	isgroup = (isgroup) ? 2 : 0;
 	fill_telegram_header(msg, QUERY_0x36_SIZE, token, isgroup, 0x36);
 	msg_from_uint64(&msg[QUERY_0x36_NODEADR64_B0], adr);
@@ -859,7 +859,7 @@ static int lightify_request_set_brightness(struct lightify_ctx *ctx, uint64_t ad
 	int n;
 	if (!ctx) return -EINVAL;
 
-	long token = ++ctx->cnt;
+	uint32_t token = ++ctx->cnt;
 	isgroup = (isgroup) ? 2 : 0;
 
 	fill_telegram_header(msg, QUERY_0x31_SIZE, token, isgroup, 0x31);
@@ -985,7 +985,7 @@ LIGHTIFY_EXPORT int lightify_node_request_update(struct lightify_ctx *ctx,
 	if (!node)return -EINVAL;
 
 	uint64_t node_adr = lightify_node_get_nodeadr(node);
-	long token = ++ctx->cnt;
+	uint32_t token = ++ctx->cnt;
 	fill_telegram_header(msg, QUERY_0x68_SIZE, token, 0x00, 0x68);
 	msg_from_uint64(&msg[QUERY_0x68_NODEADR64_B0], node_adr);
 
@@ -1072,7 +1072,7 @@ LIGHTIFY_EXPORT int lightify_node_request_update(struct lightify_ctx *ctx,
 LIGHTIFY_EXPORT int lightify_group_request_scan(struct lightify_ctx *ctx) {
 	int n,m;
 	int no_of_grps;
-	long token;
+	uint32_t token;
 	int ret;
 
 	if (!ctx) return -EINVAL;

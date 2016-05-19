@@ -93,7 +93,7 @@ struct lightify_ctx {
 	struct lightify_group *groups;
 
 	/** request id counter*/
-	long cnt;
+	uint32_t cnt;
 
 	/** timeout for IO */
 	struct timeval iotimeout;
