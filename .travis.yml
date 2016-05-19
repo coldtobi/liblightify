@@ -1,0 +1,31 @@
+# Travis CI configuration
+
+sudo: required
+dist: trusty
+
+before_install:
+  - sudo add-apt-repository -y "deb http://ftp.us.debian.org/debian unstable main contrib non-free"
+  - curl 'https://ftp-master.debian.org/keys/archive-key-7.0.asc' | sudo apt-key add -
+  - curl 'https://ftp-master.debian.org/keys/archive-key-8.asc' | sudo apt-key add -
+  - sudo apt-get -qq update
+  - sudo apt-get install -y -qq apt dpkg || true
+  - sudo apt-get -y -qq install -f
+  - yes | sudo apt-get -y -qq install check autoconf automake autoconf-archive libtool || true
+
+
+# be nice: only pull a shallow copy
+git:
+  depth: 3
+
+# build configuration:
+# - cpp -- because of the c++ example
+# - try both: clang and gcc.
+# - as we do not store configure in the repository, bootstrap accordingly.
+
+language: cpp
+
+compiler:
+  - gcc
+  - clang
+
+script: ./autogen.sh && ./configure && make && make check
