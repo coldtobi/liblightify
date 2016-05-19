@@ -26,6 +26,24 @@ language: cpp
 
 compiler:
   - gcc
-  - clang
 
-script: ./autogen.sh && ./configure && make && make check
+script: if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then ./autogen.sh && ./configure && make && make check ; fi
+
+
+# See if coverity can be integrated...
+
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "xd+V0aOPr5dFS5xHZD1Ab6nQG531NcKRU3piEyC1PwVuzRSvLjY8+myLND8RO+TKDzWFxWHyXIsSm9lMLDiaMR6GgaI331rRIJe3mW2tO8oTdBxME60QTLbR1bIgMnW5DHiOp//jh+OOf2qT+ZOFXT3rOdEnSgBhJ2zugHLkjjZgJVWPNRFDKeMt9OCXHNjm/qQMgJOX8xshzhqGebCK7Q3hPpi+fCzpdqEdpjn6eObc/xl4cLDtFkSE+sYhOdhmMD3AbDP26TTa47suwk09zMmEskAuME4TNseP8Z/2QJ322sX6uyDCNp8lg02ujqI6/VBywKj2zhsdWqg/v+LzNYtcNXqTOYBOUKnRqhFlQ3IAtjFlKh9BCMLjHlchIkSKeNKheLwMjl/eB7JpNShyIhmTdCMfHTl40G6/2bBFCd+KNgPfO7b3YjOJuaQxHSzGKc7/ItIfCbFS39fWVXSby76zN0xPvtSjZ6MEoZ9jkhgpacmIjYyvw2GyxJjmSqL1LReJN2/EC/E6gF84HXc3RJCRxUPWUt5QzpOdvQwBN8jP9iBm/7L0YRdH+1wqz80n1F1ctb4EZ6TmxcOIiwdQQLoNWQ2KV0j/Oad5BDf0NwuSkMS/zdPxp/jiLoQdod72IOU2TILOIRy5yDoK3+K15bM4DJH0K1QwebPZzkTSXTI="
+
+addons:
+  coverity_scan:
+    project:
+      name: "coldtobi/liblightify"
+      description: "Build submitted via Travis CI"
+    notification_email: tobi@coldtobi.de
+    build_command_prepend: "./autogen.sh ; ./configure; make clean"
+    build_command:   "make -j 4"
+    branch_pattern: coverity_scan
