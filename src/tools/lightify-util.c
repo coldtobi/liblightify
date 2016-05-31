@@ -320,7 +320,8 @@ const char *decode_lamptype(int type) {
 			return "ext-col";
 		case LIGHTIFY_CCT_LIGHT:
 			return "cct";
-
+		case LIGHTIFY_4WAY_SWITCH:
+			return "4way-sw";
 		default:
 			return "unknown";
 	}
