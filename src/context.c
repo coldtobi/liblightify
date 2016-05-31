@@ -611,22 +611,25 @@ LIGHTIFY_EXPORT int lightify_node_request_scan(struct lightify_ctx *ctx) {
 
 		if (ctx->gw_protocol_version == GW_PROT_OLD) {
 			switch (n) {
-			case 0x00 : // Plug
+			case 0x00 : /* Plug */
 				lightify_node_set_lamptype(node, LIGHTIFY_ONOFF_PLUG);
 				break;
-			case 0x02 : // CCT light
+			case 0x02 : /* CCT light */
 				lightify_node_set_lamptype(node, LIGHTIFY_CCT_LIGHT);
 				break;
-			case 0x04 : // dimable
+			case 0x04 : /* dimable */
 				lightify_node_set_lamptype(node, LIGHTIFY_DIMABLE_LIGHT);
 				break;
-			case 0x08 : // RGB
+			case 0x08 : /* RGB */
 				lightify_node_set_lamptype(node, LIGHTIFY_COLOUR_LIGHT);
 				break;
-			case 0x0a : // CCT, RGB
+			case 0x0a : /* CCT, RGB */
 				lightify_node_set_lamptype(node, LIGHTIFY_EXT_COLOUR_LIGHT);
 				break;
-			default: // maybe the missing dimmer plug or on/off light.
+			case 0x41: /* 4-Way-Switch */
+				lightify_node_set_lamptype(node, LIGHTIFY_4WAY_SWITCH);
+				break;
+			default: /* maybe the missing dimmer plug or on/off light. */
 				lightify_node_set_lamptype(node, LIGHTIFY_UNKNOWNTYPE | n );
 				dbg(ctx, "unknown type %x for lamp %s. PLEASE REPORT A BUG AGAINST liblightify.\n",n, lightify_node_get_name(node));
 				break;
