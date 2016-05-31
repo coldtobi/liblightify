@@ -626,6 +626,9 @@ LIGHTIFY_EXPORT int lightify_node_request_scan(struct lightify_ctx *ctx) {
 			case 0x0a : // CCT, RGB
 				lightify_node_set_lamptype(node, LIGHTIFY_EXT_COLOUR_LIGHT);
 				break;
+			case 0x41: /* 4-Way-Switch */
+				lightify_node_set_lamptype(node, LIGHTIFY_4WAY_SWITCH);
+				break;
 			default: // maybe the missing dimmer plug or on/off light.
 				lightify_node_set_lamptype(node, LIGHTIFY_UNKNOWNTYPE | n );
 				dbg(ctx, "unknown type %x for lamp %s. PLEASE REPORT A BUG AGAINST liblightify.\n",n, lightify_node_get_name(node));

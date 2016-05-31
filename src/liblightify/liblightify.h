@@ -108,6 +108,7 @@ enum lightify_node_type {
 	LIGHTIFY_COLOUR_LIGHT,    /**< RGBW */
 	LIGHTIFY_EXT_COLOUR_LIGHT,/**< Tuneable White and RGBW  */
 	LIGHTIFY_CCT_LIGHT,       /**< Tuneable White */
+	LIGHTIFY_4WAY_SWITCH,	  /**< 4 Way switch (reported by user) */
 	LIGHTIFY_UNKNOWNTYPE = 0xFF00 /**< if you encounter this, please encourage people to provide details. The lamp type is in the lower bits.*/
 };
 
