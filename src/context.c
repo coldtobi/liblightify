@@ -573,7 +573,7 @@ LIGHTIFY_EXPORT int lightify_node_request_scan(struct lightify_ctx *ctx) {
 		read_size = ANSWER_0x13_UNKNOWN6;
 		dbg(ctx, "0x13: Old GW protocol\n");
 	} else {
-		info(ctx, "Reponse len unexpected for %d nodes: %d.\n", no_of_nodes, m);
+		info(ctx, "Response len unexpected for %d nodes: %d.\n", no_of_nodes, m);
 		return -EPROTO;
 	}
 
@@ -1134,7 +1134,7 @@ LIGHTIFY_EXPORT int lightify_group_request_scan(struct lightify_ctx *ctx) {
 	m = msg[HEADER_LEN_LSB] | (msg[HEADER_LEN_MSB] << 8);
 	info(ctx, "0x1e: received %d bytes\n",m);
 	if ( no_of_grps * ANSWER_0x1e_GRP_LENGHT + ANSWER_0x1e_SIZE - 2 != m) {
-		info(ctx, "Reponse len unexpected for %d groups: %d!=%d.\n", no_of_grps,
+		info(ctx, "Response len unexpected for %d groups: %d!=%d.\n", no_of_grps,
 				no_of_grps * ANSWER_0x1e_GRP_LENGHT + ANSWER_0x1e_SIZE - 2, m);
 		return -EPROTO;
 	}
