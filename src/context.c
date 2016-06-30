@@ -739,7 +739,7 @@ static int lightify_request_set_onoff(struct lightify_ctx *ctx, uint64_t adr, in
 	/* check if the node address was echoed properly */
 	uint64_t adr2 = uint64_from_msg(&msg[ANSWER_0x32_NODEADR64_B0]);
 	if (adr != adr2) {
-		info(ctx, "unexected node mac / group adr %llx!=%llx", adr, adr2 );
+		info(ctx, "unexpected node mac / group adr %llx!=%llx", adr, adr2 );
 		return -EPROTO;
 	}
 
@@ -795,7 +795,7 @@ static int lightify_request_set_cct(struct lightify_ctx *ctx, uint64_t adr, int 
 	/* check if the node address was echoed properly */
 	uint64_t adr2 = uint64_from_msg(&msg[ANSWER_0x33_NODEADR64_B0]);
 	if (adr != adr2) {
-		info(ctx, "unexected node mac / group adr %llx!=%llx", adr, adr2 );
+		info(ctx, "unexpected node mac / group adr %llx!=%llx", adr, adr2 );
 		return -EPROTO;
 	}
 
@@ -849,7 +849,7 @@ static int lightify_request_set_rgbw(struct lightify_ctx *ctx, uint64_t adr,
 	/* check if the node address was echoed properly */
 	uint64_t adr2 = uint64_from_msg(&msg[ANSWER_0x33_NODEADR64_B0]);
 	if (adr != adr2) {
-		info(ctx, "unexected node mac / group adr %llx!=%llx", adr, adr2 );
+		info(ctx, "unexpected node mac / group adr %llx!=%llx", adr, adr2 );
 		return -EPROTO;
 	}
 
@@ -903,7 +903,7 @@ static int lightify_request_set_brightness(struct lightify_ctx *ctx, uint64_t ad
 	/* check if the node address was echoed properly */
 	uint64_t adr2 = uint64_from_msg(&msg[ANSWER_0x33_NODEADR64_B0]);
 	if (adr != adr2) {
-		info(ctx, "unexected node mac / group adr %llx!=%llx", adr, adr2 );
+		info(ctx, "unexpected node mac / group adr %llx!=%llx", adr, adr2 );
 		return -EPROTO;
 	}
 
