@@ -39,6 +39,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fcntl.h>
 #include <unistd.h>
 
+/* For KFreeBSD, which has no ENODATA .. map it to EIO */
+#ifndef ENODATA
+#define ENODATA EIO
+#endif
+
+
 enum msg_header {
 	HEADER_LEN_LSB,
 	HEADER_LEN_MSB,
