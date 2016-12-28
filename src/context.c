@@ -1332,10 +1332,7 @@ LIGHTIFY_EXPORT int lightify_node_request_color_loop(struct lightify_ctx *ctx,
 	uint8_t *ptr2 = (uint8_t*) colorspec + 1 ;
 	size_t size = number_of_specs * STEP_0xd8_SIZE;
 	for (i=1; i < size; i++) {
-		checksum -= *ptr2;
-		printf("i=%02d chk=0x%02x val=0x%02x \t", i, checksum & 0xff, *ptr);
-		if (i%4==3) printf("\n");
-		ptr2++;
+		checksum -= *ptr2++;
 	}
 	*ptr++ = checksum & 0xff;
 
