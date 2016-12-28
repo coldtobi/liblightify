@@ -48,6 +48,7 @@ global:
 	lightify_group_request_cct;
 	lightify_group_request_rgbw;
 	lightify_group_request_brightness;
+	lightify_node_request_color_loop;
 local:
 	*;
 };

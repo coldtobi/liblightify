@@ -131,6 +131,18 @@ enum lightify_node_online_state {
  */
 struct lightify_ctx;
 
+
+/** lightify_color_loop_spec
+ *
+ * struct to define one entry of a color loop
+ */
+struct lightify_color_loop_spec {
+	uint8_t delay;
+	uint8_t hue;
+	uint8_t saturation;
+	uint8_t brightness;
+} ;
+
 /** callback to roll your own I/O: Writing
  *
  * if the default function is overriden, this function is called whenever the
@@ -749,6 +761,46 @@ int lightify_group_request_rgbw(struct lightify_ctx *ctx,
  */
 int lightify_group_request_brightness(struct lightify_ctx *ctx,
 		struct lightify_group *group, unsigned int level, unsigned int fadetime) ;
+
+/** Request color loop
+ *
+ * Request the lamp to enter color loop mode.
+ * It will stay in loop mode until other commands are issued.
+ *
+ * The color loop consists of a small programm, built from
+ * lightify_color_loop_specs. You need to supply an array of those.
+ *
+ * The first entry in the array is special, it defines the starting point of
+ * the loop. Please note that the delay field of this entry *must* be 0x3C.
+ * it will not have any time-influencing properties.
+ *
+ * The static_bytes seems hard-coded but playing with it shows that they have
+ * indeed an influence on the behavior. Supply NULL to get those or provide
+ * your own 8 bytes.
+ *
+ * @param ctx
+ * @param node
+ * @param colorspec
+ * @param number_of_specs how big is the loop. (Must be exactly 15 for the time being)
+ * @param static_bytes 8-bytes to send as static bytes, instead of the hardcoded ones.
+ *        (use NULL for those)
+ *
+ * @return negative on error, 0 on success.,
+ * 		  (eg. EINVAL on parameter problems, including if you did not provide the 0x3C.
+ * 		  Other codes might be returned as well.)
+ *
+ *  \sa lightify_color_loop_specs
+ *
+ *  \warning this API will change if we find out about the static bytes.
+ *  (That's why were still at SO-NAME 0...)
+ *
+ *  \note "success" is only the report from the gateway. That does not mean it will
+ *  really start looping -- sorry, no API known to query that.
+ */
+int lightify_node_request_color_loop(struct lightify_ctx *ctx,
+		struct lightify_node *node,
+		const struct lightify_color_loop_spec* colorspec,
+		unsigned int number_of_specs, const uint8_t static_bytes[8]);
 
 
 #ifdef __cplusplus

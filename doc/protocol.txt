@@ -132,6 +132,7 @@ Time (0-65535) Unit is ~1/10sec
 ###########################
 0x68 -- get lamp status   #
 ###########################
+Query:
 MAC-Adress (8bytes),
 
 answer:
@@ -146,6 +147,34 @@ answer:
 [b]     -1b- color component BLUE
 [w]     -1b- color component WHITE
 
+###########################
+0xD8 -- color loop        #
+###########################
+Query:
+[mac] 	  8b  (lamp to manipulate)
+[static]  8b  (seems hardcoded to 01 ff 00 ff 00 3c 00 00, but may do something.
+[loop-1]  4b  start point of loop: fixed 0x3c, hue, sat, brightness
+[loop-2]  4b  next loop point.. speed, hue, sat, brightness.
+(...)
+[loop-15] 4b  last loop point.. speed, hue, sat, brightness.
+[chksum]  1b  checksum, see below.
+
+A color loop step are 4 bytes. Range seems generally 00..ff
+[delay]   1b  time -- faster is lower. 0 seems deactivate (tbc)
+[hue]     1b  color (units tbc)
+[sat]     1b  saturation (units tbc)
+[bright]  1b  brightness (units tbc)
+
+
+Checksum is calculated:
+- start value 0xff
+- subtract all bytes from loop-1 to loop-15, except the first byte (0x3c).
+
+Note: It must be 15 loop programms -- while the lamp seems to occasionally
+accept lower entries, the checksum does not correlate at all anymore
+(and I'd cases where no checksum matched)..
+
+(Answer seems to be standard as 0x31 and 0x32)
 
 Some Wireshark logs (e.g running the python-lib's testcase script)
 
