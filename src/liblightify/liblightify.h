@@ -542,6 +542,21 @@ int lightify_node_is_stale(struct lightify_node *node);
  */
 int lightify_node_get_onlinestate(struct lightify_node* node);
 
+
+/** Get the node's firmware version.
+ *
+ * The nodes' firmware version format seems to be
+ * mayor.minor.maint.build, eg. 1.2.4.14, shown as 01020414
+ * We're concatenate that into one unsigned long with this format:
+ * 0xAABBCCDD -- AA = mayor, BB=minor, CC=maint, DD=build
+ *
+ * @param node lamp
+ * @return long with version, ZERO if node was NULL.
+ *
+ *  \ingroup API_NODE
+ */
+unsigned long lightify_node_get_fwversion(struct lightify_node *node);
+
 // Node manipulation API -- will talk to the node
 
 /** Turn lamp on or off

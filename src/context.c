@@ -81,10 +81,10 @@ enum msg_0x13_answer_node {
 	ANSWER_0x13_NODE_ADR64_B6,
 	ANSWER_0x13_NODE_ADR64_B7,
 	ANSWER_0x13_NODE_NODETYPE,
-	ANSWER_0x13_UNKNOWN2,
-	ANSWER_0x13_UNKNOWN3,
-	ANSWER_0x13_UNKNOWN4,
-	ANSWER_0x13_UNKNOWN5,
+	ANSWER_0x13_FWVERSION_MAYOR,
+	ANSWER_0x13_FWVERSION_MINOR,
+	ANSWER_0x13_FWVERSION_MAINT,
+	ANSWER_0x13_FWVERSION_BUILD,
 	ANSWER_0x13_NODE_ONLINE_STATE,
 	ANSWER_0x13_NODE_GRP_MEMBER_LSB,
 	ANSWER_0x13_NODE_GRP_MEMBER_MSB,
@@ -613,6 +613,11 @@ LIGHTIFY_EXPORT int lightify_node_request_scan(struct lightify_ctx *ctx) {
 		lightify_node_set_name(node, (char*) &msg[ANSWER_0x13_NODE_NAME_START]);
 		info(ctx, "new node: %s\n", lightify_node_get_name(node));
 
+		lightify_node_set_fwversion(node, msg[ANSWER_0x13_FWVERSION_MAYOR],
+				msg[ANSWER_0x13_FWVERSION_MINOR],
+				msg[ANSWER_0x13_FWVERSION_MAINT],
+				msg[ANSWER_0x13_FWVERSION_BUILD]);
+
 		n = msg[ANSWER_0x13_NODE_NODETYPE];
 
 		if (ctx->gw_protocol_version == GW_PROT_OLD) {
@@ -667,9 +672,7 @@ LIGHTIFY_EXPORT int lightify_node_request_scan(struct lightify_ctx *ctx) {
 			}
 		}
 
-		dbg(ctx, "xtra-data: %x -- %x %x %x %x\n", msg[ANSWER_0x13_UNKNOWN1],
-				msg[ANSWER_0x13_UNKNOWN2],msg[ANSWER_0x13_UNKNOWN3],
-				msg[ANSWER_0x13_UNKNOWN4],msg[ANSWER_0x13_UNKNOWN5]);
+		dbg(ctx, "xtra-data: %x\n", msg[ANSWER_0x13_UNKNOWN1]);
 
 		if (ctx->gw_protocol_version == GW_PROT_1512) {
 			dbg(ctx, "xtra-data-new-prot: %x %x %x %x %x %x %x %x\n", msg[ANSWER_0x13_UNKNOWN6],

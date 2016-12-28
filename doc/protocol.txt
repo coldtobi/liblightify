@@ -70,8 +70,8 @@ Then a repeating block starts
              10 -- Extended Color Light              RGB, CCT, dim
                    Value seems to be bit-coded: 10 = 8+2 -> CCT + RGB; Plug is odd.
                    unmapped are: On/Off Light(0000) and Dimmable Plug Unit (0110).
-[unkn]  -4b- unknown 4 bytes. Software version? the numbers would match.
-             (recently updated to 1.2.3.14 -> data is 0x1 0x2 0x3 0x14.
+[fw-ver]  -4b- Software version, confirmed by latest fw update.
+             (recently updated to 1.2.4.0 -> data is 0x1 0x2 0x4 0x0.
 [onlne] -1b- online(=2) /offline(=0) .. other values never seen.
 [grp]   -2b- 0 if lamp is not part of a group, otherwise which group -- bitcoded !!?!
 [oo]    -1b- 0 is lamp is off, 1 if on.
@@ -128,7 +128,6 @@ RGBW (one byte each),
 Time (0-65535) Unit is ~1/10sec
 
 (Answer seems to be standard as 0x31 and 0x32)
-
 
 ###########################
 0x68 -- get lamp status   #

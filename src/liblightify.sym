@@ -27,6 +27,7 @@ global:
 	lightify_node_get_blue;
 	lightify_node_get_white;
 	lightify_node_get_cct;
+	lightify_node_get_fwversion;
 	lightify_node_get_brightness;
 	lightify_node_is_on;
 	lightify_node_is_stale;

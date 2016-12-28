@@ -485,6 +485,10 @@ START_TEST(lightify_tst_scan_nodes)
 		color = lightify_node_get_white(node);
 		ck_assert_int_eq(color, 0xf3);
 
+		// Check if firwmare version has been correctly stored.
+		unsigned long version = lightify_node_get_fwversion(node);
+		ck_assert(version == 0x01020307);
+
 		// Check we delete node information when scanfornodes fails.
 		// we do that by repeating the scan, but with the now invalid token,
 		// so we should get EPROTO here.
