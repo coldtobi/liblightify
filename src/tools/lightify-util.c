@@ -385,7 +385,7 @@ void dump_nodes_state(struct lightify_ctx *ctx) {
 	while (( node  = lightify_node_get_next(ctx, node))) {
 		count++;
 		printf("| %-16s |" , lightify_node_get_name(node));
-		printf(" %016llx |" , lightify_node_get_nodeadr(node));
+		printf(" %016lx |" , lightify_node_get_nodeadr(node));
 		printf(" %-7s |", decode_lamptype(lightify_node_get_lamptype(node)));
 		printf(" 0x%04x |", lightify_node_get_grpadr(node));
 		printf(" %-7s |", decode_online_state(lightify_node_get_onlinestate(node)));
@@ -412,9 +412,13 @@ void dump_groups(struct lightify_ctx *ctx) {
 	printf("| Group Name       | id | mask   | Group members\n");
 	printf("|------------------|----|--------|----------------\n");
 	while ((group = lightify_group_get_next(ctx,group))) {
-		printf("| %-16s | %-2d | 0x%04x |", lightify_group_get_name(group), lightify_group_get_id(group), 1 << (lightify_group_get_id(group)-1));
+		printf("| %-16s | %-2d | 0x%04x |", lightify_group_get_name(group),
+				lightify_group_get_id(group),
+				1 << (lightify_group_get_id(group)-1));
 		struct lightify_node *node = NULL;
-		while(node = lightify_group_get_next_node(group, node)) printf(" %s", lightify_node_get_name(node));
+		while ((node = lightify_group_get_next_node(group, node))) {
+			printf(" %s", lightify_node_get_name(node));
+		}
 		printf("\n");
 	}
 	printf("|------------------|----|--------|----------------\n");
