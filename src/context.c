@@ -317,11 +317,11 @@ enum msg_0xd8_query {
 };
 
 enum msg_0xd8_step {
-	STEP_0xd8_SPEED,
-	STEP_0xd8_HUE,
-	STEP_0xd8_SATURATION,
-	STEP_0xd8_BRIGHTNESS,
-	STEP_0xd8_SIZE
+	STEP_0xD8_SPEED,
+	STEP_0xD8_HUE,
+	STEP_0xD8_SATURATION,
+	STEP_0xD8_BRIGHTNESS,
+	STEP_0xD8_SIZE
 };
 
 enum msg_0xd8_answer {
@@ -1289,13 +1289,12 @@ LIGHTIFY_EXPORT int lightify_node_request_color_loop(struct lightify_ctx *ctx,
 		struct lightify_node *node, const struct lightify_color_loop_spec* colorspec,
 		unsigned int number_of_specs, const uint8_t static_bytes[8])
 {
-	if (!ctx || !node || !colorspec || 0 == number_of_specs) return -EINVAL;
-	if (number_of_specs != 15) return -EINVAL;
+	if (!ctx || !node || !colorspec || 15 != number_of_specs) return -EINVAL;
 
 	/* colorspec[0].delay must be 0x3C */
 	if (colorspec[0].delay != 0x3C) return -EINVAL;
 
-	unsigned int telegram_size = QUERY_0xD8_START_OF_PROGRAMM + 1 + number_of_specs*STEP_0xd8_SIZE;
+	unsigned int telegram_size = QUERY_0xD8_START_OF_PROGRAMM + 1 + number_of_specs*STEP_0xD8_SIZE;
 	unsigned char msg[telegram_size +1];
 
 	uint32_t token = ++ctx->cnt;
@@ -1330,7 +1329,7 @@ LIGHTIFY_EXPORT int lightify_node_request_color_loop(struct lightify_ctx *ctx,
 	 * except the first byte (which is static 0x3c) */
 	unsigned int checksum = 0xff;
 	uint8_t *ptr2 = (uint8_t*) colorspec + 1 ;
-	size_t size = number_of_specs * STEP_0xd8_SIZE;
+	size_t size = number_of_specs * STEP_0xD8_SIZE;
 	for (i=1; i < size; i++) {
 		checksum -= *ptr2++;
 	}
