@@ -32,10 +32,10 @@ compiler:
   - gcc
 
 script:
- - if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; ./autogen.sh; fi
- - if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; ./configure || cat config.log; fi
- - if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; make || ( cat Makefile && exit 1); fi
- - if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; make check || ( cat test-suite.log && exit 1); fi
+ - if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then ./autogen.sh; fi
+ - if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then ./configure || cat config.log; fi
+ - if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then make || ( cat Makefile && exit 1); fi
+ - if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then make check || ( cat test-suite.log && exit 1); fi
 
 # See if coverity can be integrated...
 env:
