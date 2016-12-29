@@ -1307,7 +1307,7 @@ LIGHTIFY_EXPORT int lightify_node_request_color_loop(struct lightify_ctx *ctx,
 	 * unclear meaning -- some bytes seems to change behaviour,
 	 * need to fiddle with it -- this is why this api is not stable yet.*/
 	if (!static_bytes) {
-		const unsigned char statics[8] = {0x01, 0xff, 0x00, 0xff, 0x80, 0x3c, 0x00, 0x00};
+		const unsigned char statics[8] = {0x01, 0xff, 0x00, 0xff, 0x00, 0x3c, 0x00, 0x00};
 		memcpy(&msg[QUERY_0xD8_UNKNOWN_1],statics,sizeof(statics));
 	} else {
 		memcpy(&msg[QUERY_0xD8_UNKNOWN_1],static_bytes,8);

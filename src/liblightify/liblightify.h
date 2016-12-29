@@ -135,13 +135,15 @@ struct lightify_ctx;
 /** lightify_color_loop_spec
  *
  * struct to define one entry of a color loop
+ *
+ * \ingroup API_NODE
  */
 struct lightify_color_loop_spec {
-	uint8_t delay;
-	uint8_t hue;
-	uint8_t saturation;
-	uint8_t brightness;
-} ;
+	uint8_t delay; /**< delay */
+	uint8_t hue; /**< hue */
+	uint8_t saturation; /**< saturation */
+	uint8_t brightness; /**< brightness */
+};
 
 /** callback to roll your own I/O: Writing
  *
