@@ -417,7 +417,7 @@ err_out:
 
 		struct lean_nodemap *last_inserted = NULL;
 		struct lightify_node *node = NULL;
-		while(node = lightify_node_get_next(_ctx,node)) {
+		while ((node = lightify_node_get_next(_ctx, node))) {
 			struct lean_nodemap *nm = new lean_nodemap();
 			if (!nm) return -ENOMEM;
 			nm->next = 0;
