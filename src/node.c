@@ -321,7 +321,7 @@ LIGHTIFY_EXPORT unsigned long lightify_node_get_fwversion(struct lightify_node *
 
 int lightify_node_set_fwversion(struct lightify_node *node, uint8_t mayor, uint8_t minor, uint8_t maint, uint8_t build) {
 	if(!node) return -EINVAL;
-	unsigned long version = mayor << 24 | minor << 16 | maint << 8 | build;
+	unsigned long version = mayor << 24U | minor << 16U | maint << 8U | build;
 	node->fwversion = version;
 	return 0;
 }
