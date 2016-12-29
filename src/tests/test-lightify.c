@@ -85,12 +85,12 @@ void print_protocol_mismatch_read(struct fake_socket *mfs, const unsigned char *
 // testdata
 
 // expected string to be sent to the gateway when scanning for nodes
-const static char scanfornodes_query[] = {0x07,0x00,0x00,0x13,0x01,0x00,0x00,0x00,0x01 };
+const static unsigned char scanfornodes_query[] = {0x07,0x00,0x00,0x13,0x01,0x00,0x00,0x00,0x01 };
 
 // dummy response for the scan for nodes command
 // (wiresharked, but edited to avoid same data e.g for the colors  ;-)
 // MAC64 set to 0xdeadbeef12345678
-const static char scanfornodes_answer[] = {
+const static unsigned char scanfornodes_answer[] = {
 	0x33, 0x00, 0x01, 0x13, 0x01, 0x00, 0x00, 0x00,
 	0x00, 0x01, 0x00, 0x55, 0xaa,
 	0x78, 0x56, 0x34, 0x12, 0xef, 0xbe, 0xad, 0xde,
@@ -101,40 +101,39 @@ const static char scanfornodes_answer[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-
-const static char turnonlight_query_broadcast[] = {
+const static unsigned char turnonlight_query_broadcast[] = {
 	0x0f, 0x00, 0x00, 0x32, 0x02, 0x00, 0x00, 0x00,
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	0x01
 };
 
-const static char turnonlight_answer_broadcast[] = {
+const static unsigned char turnonlight_answer_broadcast[] = {
 	0x12, 0x00, 0x01, 0x32, 0x02, 0x00, 0x00, 0x00,
 	0x00, 0x01, 0x00,
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	0x00
 };
 
-const static char turnofflight_query_broadcast[] = {
+const static unsigned char turnofflight_query_broadcast[] = {
 	0x0f, 0x00, 0x00, 0x32, 0x04, 0x00, 0x00, 0x00,
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	0x00
 };
 
-const static char turnofflight_answer_broadcast[] = {
+const static unsigned char turnofflight_answer_broadcast[] = {
 	0x12, 0x00, 0x01, 0x32, 0x04, 0x00, 0x00, 0x00,
 	0x00, 0x01, 0x00,
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	0x00
 };
 
-const static char turnonlight2_query_broadcast[] = {
+const static unsigned char turnonlight2_query_broadcast[] = {
 	0x0f, 0x00, 0x00, 0x32, 0x05, 0x00, 0x00, 0x00,
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	0x01
 };
 
-const static char turnonlight2_answer_broadcast[] = {
+const static unsigned char turnonlight2_answer_broadcast[] = {
 	0x12, 0x00, 0x01, 0x32, 0x05, 0x00, 0x00, 0x00,
 	0x00, 0x01, 0x00,
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
@@ -142,13 +141,13 @@ const static char turnonlight2_answer_broadcast[] = {
 };
 
 
-const static char turnonlight_query_node[] = {
+const static unsigned char turnonlight_query_node[] = {
 	0x0f, 0x00, 0x00, 0x32, 0x03, 0x00, 0x00, 0x00,
 	0x78, 0x56, 0x34, 0x12, 0xef, 0xbe, 0xad, 0xde,
 	0x01
 };
 
-const static char turnonlight_answer_node[] = {
+const static unsigned char turnonlight_answer_node[] = {
 	0x12, 0x00, 0x01, 0x32, 0x03, 0x00, 0x00, 0x00,
 	0x00, 0x01, 0x00,
 	0x78, 0x56, 0x34, 0x12, 0xef, 0xbe, 0xad, 0xde,
@@ -156,51 +155,51 @@ const static char turnonlight_answer_node[] = {
 };
 
 
-const static char changecct_query_node[] = {
+const static unsigned char changecct_query_node[] = {
 	0x12, 0x00, 0x00, 0x33, 0x06, 0x00, 0x00, 0x00,
 	0x78, 0x56, 0x34, 0x12, 0xef, 0xbe, 0xad, 0xde,
 	0x8C, 0x0A, 0x0a, 0x00
 };
 
-const static char changecct_answer_node[] = {
+const static unsigned char changecct_answer_node[] = {
 	0x12, 0x00, 0x01, 0x33, 0x06, 0x00, 0x00, 0x00,
 	0x00, 0x01, 0x00,
 	0x78, 0x56, 0x34, 0x12, 0xef, 0xbe, 0xad, 0xde,
 	0x00
 };
 
-const static char setrgbw_query_node[] = {
+const static unsigned char setrgbw_query_node[] = {
 	0x14, 0x00, 0x00, 0x36, 0x07, 0x00, 0x00, 0x00,
 	0x78, 0x56, 0x34, 0x12, 0xef, 0xbe, 0xad, 0xde,
 	0x01, 0x02, 0x03, 0x04, 0x0a, 0x00
 };
 
-const static char setrgbw_answer_node[] = {
+const static unsigned char setrgbw_answer_node[] = {
 	0x12, 0x00, 0x01, 0x36, 0x07, 0x00, 0x00, 0x00,
 	0x00, 0x01, 0x00,
 	0x78, 0x56, 0x34, 0x12, 0xef, 0xbe, 0xad, 0xde,
 	0x00
 };
 
-const static char setbright_query_node[] = {
+const static unsigned char setbright_query_node[] = {
 	0x11, 0x00, 0x00, 0x31, 0x08, 0x00, 0x00, 0x00,
 	0x78, 0x56, 0x34, 0x12, 0xef, 0xbe, 0xad, 0xde,
 	0x12,  0x0a, 0x00
 };
 
-const static char setbright_answer_node[] = {
+const static unsigned char setbright_answer_node[] = {
 	0x12, 0x00, 0x01, 0x31, 0x08, 0x00, 0x00, 0x00,
 	0x00, 0x01, 0x00,
 	0x78, 0x56, 0x34, 0x12, 0xef, 0xbe, 0xad, 0xde,
 	0x00
 };
 
-const static char requpdate_query_node[] = {
+const static unsigned char requpdate_query_node[] = {
 	0x0e, 0x00, 0x00, 0x68, 0x09, 0x00, 0x00, 0x00,
 	0x78, 0x56, 0x34, 0x12, 0xef, 0xbe, 0xad, 0xde,
 };
 
-const static char requpdate_answer_node[] = {
+const static unsigned char requpdate_answer_node[] = {
 	0x1d, 0x00, 0x00, 0x68, 0x09, 0x00, 0x00, 0x00,
 	0x00, 0x01, 0x00,
 	0x78, 0x56, 0x34, 0x12, 0xef, 0xbe, 0xad, 0xde,
@@ -209,11 +208,11 @@ const static char requpdate_answer_node[] = {
 };
 
 
-const static char req_getgroups[] = {
+const static unsigned char req_getgroups[] = {
 	0x07, 0x00, 0x00, 0x1e, 0x01, 0x00, 0x00, 0x00, 0x35
 };
 
-const static char req_getgroups_answer[] = {
+const static unsigned char req_getgroups_answer[] = {
  0x3f, 0x00, 0x01, 0x1e, 0x01, 0x00, 0x00, 0x00,
  0x00, 0x03, 0x00,
  0x01, 0x00, 0x47, 0x72, 0x75, 0x70, 0x70, 0x65,
@@ -368,7 +367,7 @@ int my_write_to_socket(struct lightify_ctx *ctx, unsigned char *msg,
 	struct fake_socket *fs = (struct fake_socket*) lightify_get_userdata(ctx);
 	assert(fs);
 
-	printf("my_write_from_socket: size=%d, msg=%p\n", size, msg);
+	printf("my_write_from_socket: size=%zu, msg=%p\n", size, msg);
 
 	if (!fs->buf_write) {
 		fs->buf_write = malloc(size);
@@ -392,7 +391,7 @@ int my_read_from_socket(struct lightify_ctx *ctx, unsigned char *msg,
 	assert(fs);
 	assert(fs->buf_read);
 
-	printf("my_read_from_socket: size=%d, msg=%p\n", size, msg);
+	printf("my_read_from_socket: size=%zu, msg=%p\n", size, msg);
 
 	read_size = fs->size_read;
 	if (read_size > size)
@@ -586,7 +585,7 @@ START_TEST(lightify_tst_manipulate_nodes)
 
 			// check if cache has been updated.
 			struct lightify_node *node = NULL;
-			while( node = lightify_node_get_next(_ctx, node)) {
+			while ((node = lightify_node_get_next(_ctx, node))) {
 				err = lightify_node_is_on(node);
 				ck_assert_int_eq(err, 1);
 			}
@@ -601,7 +600,7 @@ START_TEST(lightify_tst_manipulate_nodes)
 			}
 
 			node = NULL;
-			while( node = lightify_node_get_next(_ctx, node)) {
+			while ((node = lightify_node_get_next(_ctx, node))) {
 				err = lightify_node_is_on(node);
 				ck_assert_int_eq(err, 0);
 			}
@@ -615,7 +614,7 @@ START_TEST(lightify_tst_manipulate_nodes)
 			   print_protocol_mismatch_read(mfs,turnonlight2_answer_broadcast);
 			}
 		    node = NULL;
-			while( node = lightify_node_get_next(_ctx, node)) {
+			while ((node = lightify_node_get_next(_ctx, node))) {
 				err = lightify_node_is_on(node);
 				ck_assert_int_eq(err, 1);
 			}
@@ -741,7 +740,7 @@ START_TEST(lightify_tst_groups_basic) {
 
 		// The sample recorded answer has 3 Groups in it.
 		ck_assert_int_eq(err, 3);
-	} while(0);
+	}
 
 	// Obtain pointer to group
 	{
@@ -757,7 +756,7 @@ START_TEST(lightify_tst_groups_basic) {
 		// no Fourth
 		group2 = lightify_group_get_next(_ctx,group2);
 		ck_assert(!group2);
-	} while(0);
+	}
 
 	// Check if name and id is ok for those speciems..
 	{
@@ -770,10 +769,7 @@ START_TEST(lightify_tst_groups_basic) {
 		group = lightify_group_get_next(_ctx, group);
 		ck_assert_int_eq(strcmp("Gruppe3", lightify_group_get_name(group)),0);
 		ck_assert_int_eq(lightify_group_get_id(group), 3);
-	} while(0);
-
-
-
+	}
 
 }END_TEST
 
