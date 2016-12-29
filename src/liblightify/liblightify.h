@@ -567,7 +567,7 @@ int lightify_node_get_onlinestate(struct lightify_node* node);
  *
  *  \ingroup API_NODE
  */
-unsigned long lightify_node_get_fwversion(struct lightify_node *node);
+uint32_t lightify_node_get_fwversion(struct lightify_node *node);
 
 // Node manipulation API -- will talk to the node
 

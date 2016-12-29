@@ -73,7 +73,7 @@ struct lightify_node {
 
 	/** what we  believe is the firmware version
 	 * stuffed into one long -- 4 bytes: mayor.minor.maint.build */
-	unsigned long fwversion;
+	uint32_t fwversion;
 
 	/** do we have confidence in the node status?
 	 * Set to 1 if we did not get updated information on this node or a command
@@ -314,14 +314,14 @@ int lightify_node_set_stale(struct lightify_node *node, int stale) {
 	return 0;
 }
 
-LIGHTIFY_EXPORT unsigned long lightify_node_get_fwversion(struct lightify_node *node) {
+LIGHTIFY_EXPORT uint32_t lightify_node_get_fwversion(struct lightify_node *node) {
 	if(!node) return 0;
 	return node->fwversion;
 }
 
 int lightify_node_set_fwversion(struct lightify_node *node, uint8_t mayor, uint8_t minor, uint8_t maint, uint8_t build) {
 	if(!node) return -EINVAL;
-	unsigned long version = mayor << 24U | minor << 16U | maint << 8U | build;
+	uint32_t version = mayor << 24U | minor << 16U | maint << 8U | build;
 	node->fwversion = version;
 	return 0;
 }
