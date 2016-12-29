@@ -210,4 +210,21 @@ int lightify_node_set_online_status(struct lightify_node* node, uint8_t state);
  */
 int lightify_node_set_stale(struct lightify_node *node, int stale);
 
+/** Set the node's firmware version.
+ *
+ * The nodes' firmware version format seems to be
+ * mayor.minor.maint.build, eg. 1.2.4.14, shown as 01020414
+ * We're concatenate that into one unsigned long with this format:
+ * 0xAABBCCDD -- AA = mayor, BB=minor, CC=maint, DD=build
+ *
+ * @param node to be manipulated
+ * @param mayor version number
+ * @param minor version number
+ * @param maint (maintainance) version number
+ * @param build number
+ * @return negative on error
+ */
+int lightify_node_set_fwversion(struct lightify_node *node, uint8_t mayor,
+		uint8_t minor, uint8_t maint, uint8_t build);
+
 #endif /* SRC_NODE_H_ */

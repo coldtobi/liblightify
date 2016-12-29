@@ -4,14 +4,18 @@ sudo: required
 dist: trusty
 
 before_install:
-  - sudo add-apt-repository -y "deb http://ftp.us.debian.org/debian unstable main contrib non-free"
+# Add Xenial repository and pull enough so that installing build-deps will not fail. (newer dpkg needed)
+  - sudo add-apt-repository -y "deb http://de.archive.ubuntu.com/ubuntu/ xenial main"
+  - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv 0xEFE21092
+  - sudo apt-get -q update
+  - sudo apt-get install -y -q dpkg
+# Add Debian-sid repository -- Newer Ubuntu's are not available, so we need to mix Ubuntu and Debian :-/
+# (we need a more recent autoconf-archive)
+  - sudo add-apt-repository -y "deb http://ftp.us.debian.org/debian unstable main"
   - curl 'https://ftp-master.debian.org/keys/archive-key-7.0.asc' | sudo apt-key add -
   - curl 'https://ftp-master.debian.org/keys/archive-key-8.asc' | sudo apt-key add -
-  - sudo apt-get -qq update
-  - sudo apt-get install -y -qq apt dpkg || true
-  - sudo apt-get -y -qq install -f
-  - yes | sudo apt-get -y -qq install check autoconf automake autoconf-archive libtool || true
-
+  - sudo apt-get -q update
+  - sudo apt-get -y -q install check autoconf automake autoconf-archive libtool build-essential
 
 # be nice: only pull a shallow copy
 git:
@@ -27,11 +31,13 @@ language: cpp
 compiler:
   - gcc
 
-script: if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then ./autogen.sh && ./configure && make && make check ; fi
-
+script:
+ - if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; ./autogen.sh; fi
+ - if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; ./configure || cat config.log; fi
+ - if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; make || ( cat Makefile && exit 1); fi
+ - if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; make check || ( cat test-suite.log && exit 1); fi
 
 # See if coverity can be integrated...
-
 env:
   global:
    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created

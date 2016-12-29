@@ -9,6 +9,11 @@ The libary uses autotools. To build it use
 
 ## Dependencies
 
+The doxygen integration into autoconf needs a recent ax_prog_doxygen.m4.
+The required changes have been commited to the autoconf-archive 2015-11-23,
+so any autoconf-archive beyond this should work.
+See https://www.gnu.org/software/autoconf-archive/ax_prog_doxygen.html
+
 The testsuite needs "check"  -- check.sourceforge.net
 
 ## Usage

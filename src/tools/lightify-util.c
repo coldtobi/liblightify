@@ -69,6 +69,7 @@ static struct option long_options[] = {
 { "list-groups", no_argument, 0, 2},
 { "group", required_argument, 0, 'g' },
 { "update", no_argument, 0, 'u' },
+{ "colorloop", no_argument, 'z' },
 { 0, 0, 0, 0 }
 };
 /* getopt_long stores the option index here. */
@@ -243,6 +244,39 @@ void command_update_node(struct lightify_ctx *ctx) {
 	printf("update_node ret=%d\n", ret);
 }
 
+void command_do_loop(struct lightify_ctx *ctx) {
+	struct lightify_node *node = find_node_per_name(ctx,name_data);
+	if (!node) {
+		return;
+	}
+
+	/* assemble some colorspec for testing.*/
+	struct lightify_color_loop_spec colorspec[] = {
+	 {  0x3c , 0x00 , 0xff , 0xff },
+     {  0x05 , 15 , 0xff , 0xff },
+     {  0x05 , 15 , 0xff , 0xff },
+	 {  0x05 , 30 , 0xff , 0xff },
+	 {  0x05 , 45 , 0xff , 0xff },
+	 {  0x05 , 60 , 0xff , 0xff },
+	 {  0x05 , 75 , 0xff , 0xff },
+	 {	0x05 , 90 , 0xff , 0xff },
+	 {  0x05 , 125 , 0xff , 0xff },
+	 {	0x05 , 150 , 0xff , 0xff },
+	 {	0x05 , 175 , 0xff , 0xff },
+	 {	0x05 , 200 , 0xff , 0xff },
+	 {	0x05 , 225 , 0xff , 0xff },
+	 {	0x05 , 250 , 0xff , 0xff },
+	 {	0x05 , 255 , 0xff , 0xff }
+	};
+
+	unsigned char statics[8] = {0x01, 0xff, 0x00, 0xff, 0x80, 0x3c, 0x00, 0x00};
+
+	lightify_node_request_color_loop(ctx,  node, colorspec,
+				sizeof(colorspec)/sizeof(struct lightify_color_loop_spec), NULL);
+	return;
+}
+
+
 void setup_connection(struct lightify_ctx *ctx) {
 	/* Create a socket point */
 	int err;
@@ -404,7 +438,7 @@ int main(int argc, char *argv[]) {
 
 
 	while (1) {
-		c = getopt_long(argc, argv, "dc:r:l:n:h:p:01t:w:g:u", long_options,
+		c = getopt_long(argc, argv, "dc:r:l:n:h:p:01t:w:g:u:z", long_options,
 				&option_index);
 		if (c == -1)
 			break;
@@ -512,6 +546,12 @@ int main(int argc, char *argv[]) {
 		case 'u': {
 			if (!gonnected || !name_data) { usage(argv); exit(1); }
 			command_update_node(ctx);
+			break;
+		}
+
+		case 'z': {
+			if (!gonnected || !name_data) { usage(argv); exit(1); }
+			command_do_loop(ctx);
 			break;
 		}
 

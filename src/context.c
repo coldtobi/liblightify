@@ -37,7 +37,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <errno.h>
 #include <fcntl.h>
+#include <string.h>
 #include <unistd.h>
+
+/* For KFreeBSD, which has no ENODATA .. map it to EIO */
+#ifndef ENODATA
+#define ENODATA EIO
+#endif
+
 
 enum msg_header {
 	HEADER_LEN_LSB,
@@ -75,10 +82,10 @@ enum msg_0x13_answer_node {
 	ANSWER_0x13_NODE_ADR64_B6,
 	ANSWER_0x13_NODE_ADR64_B7,
 	ANSWER_0x13_NODE_NODETYPE,
-	ANSWER_0x13_UNKNOWN2,
-	ANSWER_0x13_UNKNOWN3,
-	ANSWER_0x13_UNKNOWN4,
-	ANSWER_0x13_UNKNOWN5,
+	ANSWER_0x13_FWVERSION_MAYOR,
+	ANSWER_0x13_FWVERSION_MINOR,
+	ANSWER_0x13_FWVERSION_MAINT,
+	ANSWER_0x13_FWVERSION_BUILD,
 	ANSWER_0x13_NODE_ONLINE_STATE,
 	ANSWER_0x13_NODE_GRP_MEMBER_LSB,
 	ANSWER_0x13_NODE_GRP_MEMBER_MSB,
@@ -288,6 +295,50 @@ enum msg_0x1e_answerpergroup {
 	ANSWER_0x1e_GRP_LENGHT= ANSWER_0x1e_GRP_NAME+16
 };
 
+enum msg_0xd8_query {
+	QUERY_0xD8_NODEADR64_B0 = HEADER_PAYLOAD_START,
+	QUERY_0xD8_NODEADR64_B1,
+	QUERY_0xD8_NODEADR64_B2,
+	QUERY_0xD8_NODEADR64_B3,
+	QUERY_0xD8_NODEADR64_B4,
+	QUERY_0xD8_NODEADR64_B5,
+	QUERY_0xD8_NODEADR64_B6,
+	QUERY_0xD8_NODEADR64_B7,
+	QUERY_0xD8_UNKNOWN_1,
+	QUERY_0xD8_UNKNOWN_2,
+	QUERY_0xD8_UNKNOWN_3,
+	QUERY_0xD8_UNKNOWN_4,
+	QUERY_0xD8_UNKNOWN_5,
+	QUERY_0xD8_UNKNOWN_6,
+	QUERY_0xD8_UNKNOWN_7,
+	QUERY_0xD8_UNKNOWN_8,
+	QUERY_0xD8_START_OF_PROGRAMM,
+	/* now, the program starts. */
+};
+
+enum msg_0xd8_step {
+	STEP_0xd8_SPEED,
+	STEP_0xd8_HUE,
+	STEP_0xd8_SATURATION,
+	STEP_0xd8_BRIGHTNESS,
+	STEP_0xd8_SIZE
+};
+
+enum msg_0xd8_answer {
+	ANSWER_0xD8_STATE = HEADER_PAYLOAD_START,
+	ANSWER_0xD8_RESERVED_LSB,
+	ANSWER_0xD8_RESERVED_MSB,
+	ANSWER_0xD8_NODEADR64_B0,
+	ANSWER_0xD8_NODEADR64_B1,
+	ANSWER_0xD8_NODEADR64_B2,
+	ANSWER_0xD8_NODEADR64_B3,
+	ANSWER_0xD8_NODEADR64_B4,
+	ANSWER_0xD8_NODEADR64_B5,
+	ANSWER_0xD8_NODEADR64_B6,
+	ANSWER_0xD8_NODEADR64_B7,
+	ANSWER_0xD8_UNKNOWN1,
+	ANSWER_0xD8_SIZE
+};
 
 // 0 seems success, non-zero error.
 static int decode_status(unsigned char code) {
@@ -573,7 +624,7 @@ LIGHTIFY_EXPORT int lightify_node_request_scan(struct lightify_ctx *ctx) {
 		read_size = ANSWER_0x13_UNKNOWN6;
 		dbg(ctx, "0x13: Old GW protocol\n");
 	} else {
-		info(ctx, "Reponse len unexpected for %d nodes: %d.\n", no_of_nodes, m);
+		info(ctx, "Response len unexpected for %d nodes: %d.\n", no_of_nodes, m);
 		return -EPROTO;
 	}
 
@@ -607,6 +658,11 @@ LIGHTIFY_EXPORT int lightify_node_request_scan(struct lightify_ctx *ctx) {
 		lightify_node_set_name(node, (char*) &msg[ANSWER_0x13_NODE_NAME_START]);
 		info(ctx, "new node: %s\n", lightify_node_get_name(node));
 
+		lightify_node_set_fwversion(node, msg[ANSWER_0x13_FWVERSION_MAYOR],
+				msg[ANSWER_0x13_FWVERSION_MINOR],
+				msg[ANSWER_0x13_FWVERSION_MAINT],
+				msg[ANSWER_0x13_FWVERSION_BUILD]);
+
 		n = msg[ANSWER_0x13_NODE_NODETYPE];
 
 		if (ctx->gw_protocol_version == GW_PROT_OLD) {
@@ -626,9 +682,6 @@ LIGHTIFY_EXPORT int lightify_node_request_scan(struct lightify_ctx *ctx) {
 			case 0x0a : /* CCT, RGB */
 				lightify_node_set_lamptype(node, LIGHTIFY_EXT_COLOUR_LIGHT);
 				break;
-			case 0x41: /* 4-Way-Switch */
-				lightify_node_set_lamptype(node, LIGHTIFY_4WAY_SWITCH);
-				break;
 			default: /* maybe the missing dimmer plug or on/off light. */
 				lightify_node_set_lamptype(node, LIGHTIFY_UNKNOWNTYPE | n );
 				dbg(ctx, "unknown type %x for lamp %s. PLEASE REPORT A BUG AGAINST liblightify.\n",n, lightify_node_get_name(node));
@@ -642,6 +695,7 @@ LIGHTIFY_EXPORT int lightify_node_request_scan(struct lightify_ctx *ctx) {
 				lightify_node_set_lamptype(node, LIGHTIFY_ONOFF_PLUG);
 				break;
 			case 0x00 : // CCT light
+			case 0x02 : // reported by user as CCT light as well.
 				lightify_node_set_lamptype(node, LIGHTIFY_CCT_LIGHT);
 				break;
 			case 0x04 : // dimable
@@ -653,6 +707,9 @@ LIGHTIFY_EXPORT int lightify_node_request_scan(struct lightify_ctx *ctx) {
 			case 0x0a : // CCT, RGB
 				lightify_node_set_lamptype(node, LIGHTIFY_EXT_COLOUR_LIGHT);
 				break;
+			case 0x41: /* 4-Way-Switch */
+				lightify_node_set_lamptype(node, LIGHTIFY_4WAY_SWITCH);
+				break;
 			default: // maybe the missing dimmer plug or on/off light.
 				lightify_node_set_lamptype(node, LIGHTIFY_UNKNOWNTYPE | n );
 				dbg(ctx, "unknown type %x for lamp %s. PLEASE REPORT A BUG AGAINST liblightify.\n",n, lightify_node_get_name(node));
@@ -660,9 +717,7 @@ LIGHTIFY_EXPORT int lightify_node_request_scan(struct lightify_ctx *ctx) {
 			}
 		}
 
-		dbg(ctx, "xtra-data: %x -- %x %x %x %x\n", msg[ANSWER_0x13_UNKNOWN1],
-				msg[ANSWER_0x13_UNKNOWN2],msg[ANSWER_0x13_UNKNOWN3],
-				msg[ANSWER_0x13_UNKNOWN4],msg[ANSWER_0x13_UNKNOWN5]);
+		dbg(ctx, "xtra-data: %x\n", msg[ANSWER_0x13_UNKNOWN1]);
 
 		if (ctx->gw_protocol_version == GW_PROT_1512) {
 			dbg(ctx, "xtra-data-new-prot: %x %x %x %x %x %x %x %x\n", msg[ANSWER_0x13_UNKNOWN6],
@@ -738,7 +793,7 @@ static int lightify_request_set_onoff(struct lightify_ctx *ctx, uint64_t adr, in
 	/* check if the node address was echoed properly */
 	uint64_t adr2 = uint64_from_msg(&msg[ANSWER_0x32_NODEADR64_B0]);
 	if (adr != adr2) {
-		info(ctx, "unexected node mac / group adr %llx!=%llx", adr, adr2 );
+		info(ctx, "unexpected node mac / group adr %llx!=%llx", adr, adr2 );
 		return -EPROTO;
 	}
 
@@ -794,7 +849,7 @@ static int lightify_request_set_cct(struct lightify_ctx *ctx, uint64_t adr, int 
 	/* check if the node address was echoed properly */
 	uint64_t adr2 = uint64_from_msg(&msg[ANSWER_0x33_NODEADR64_B0]);
 	if (adr != adr2) {
-		info(ctx, "unexected node mac / group adr %llx!=%llx", adr, adr2 );
+		info(ctx, "unexpected node mac / group adr %llx!=%llx", adr, adr2 );
 		return -EPROTO;
 	}
 
@@ -848,7 +903,7 @@ static int lightify_request_set_rgbw(struct lightify_ctx *ctx, uint64_t adr,
 	/* check if the node address was echoed properly */
 	uint64_t adr2 = uint64_from_msg(&msg[ANSWER_0x33_NODEADR64_B0]);
 	if (adr != adr2) {
-		info(ctx, "unexected node mac / group adr %llx!=%llx", adr, adr2 );
+		info(ctx, "unexpected node mac / group adr %llx!=%llx", adr, adr2 );
 		return -EPROTO;
 	}
 
@@ -902,7 +957,7 @@ static int lightify_request_set_brightness(struct lightify_ctx *ctx, uint64_t ad
 	/* check if the node address was echoed properly */
 	uint64_t adr2 = uint64_from_msg(&msg[ANSWER_0x33_NODEADR64_B0]);
 	if (adr != adr2) {
-		info(ctx, "unexected node mac / group adr %llx!=%llx", adr, adr2 );
+		info(ctx, "unexpected node mac / group adr %llx!=%llx", adr, adr2 );
 		return -EPROTO;
 	}
 
@@ -1133,7 +1188,7 @@ LIGHTIFY_EXPORT int lightify_group_request_scan(struct lightify_ctx *ctx) {
 	m = msg[HEADER_LEN_LSB] | (msg[HEADER_LEN_MSB] << 8);
 	info(ctx, "0x1e: received %d bytes\n",m);
 	if ( no_of_grps * ANSWER_0x1e_GRP_LENGHT + ANSWER_0x1e_SIZE - 2 != m) {
-		info(ctx, "Reponse len unexpected for %d groups: %d!=%d.\n", no_of_grps,
+		info(ctx, "Response len unexpected for %d groups: %d!=%d.\n", no_of_grps,
 				no_of_grps * ANSWER_0x1e_GRP_LENGHT + ANSWER_0x1e_SIZE - 2, m);
 		return -EPROTO;
 	}
@@ -1226,4 +1281,96 @@ LIGHTIFY_EXPORT int lightify_group_request_brightness(struct lightify_ctx *ctx,
 		if (ret < 0 ) lightify_node_set_stale(node, 1);
 	}
 	return ret;
+}
+
+// note: experimental API -- do not use yet.
+// WARNING: INSTABLE API.
+LIGHTIFY_EXPORT int lightify_node_request_color_loop(struct lightify_ctx *ctx,
+		struct lightify_node *node, const struct lightify_color_loop_spec* colorspec,
+		unsigned int number_of_specs, const uint8_t static_bytes[8])
+{
+	if (!ctx || !node || !colorspec || 0 == number_of_specs) return -EINVAL;
+	if (number_of_specs != 15) return -EINVAL;
+
+	/* colorspec[0].delay must be 0x3C */
+	if (colorspec[0].delay != 0x3C) return -EINVAL;
+
+	unsigned int telegram_size = QUERY_0xD8_START_OF_PROGRAMM + 1 + number_of_specs*STEP_0xd8_SIZE;
+	unsigned char msg[telegram_size +1];
+
+	uint32_t token = ++ctx->cnt;
+	fill_telegram_header(msg, telegram_size, token, 0, 0xd8);
+
+	uint64_t adr = lightify_node_get_nodeadr(node);
+	msg_from_uint64(&msg[QUERY_0xD8_NODEADR64_B0], adr);
+
+	/* static 8 bytes: 01 ff 00 ff 00 3c 00 00
+	 * unclear meaning -- some bytes seems to change behaviour,
+	 * need to fiddle with it -- this is why this api is not stable yet.*/
+	if (!static_bytes) {
+		const unsigned char statics[8] = {0x01, 0xff, 0x00, 0xff, 0x80, 0x3c, 0x00, 0x00};
+		memcpy(&msg[QUERY_0xD8_UNKNOWN_1],statics,sizeof(statics));
+	} else {
+		memcpy(&msg[QUERY_0xD8_UNKNOWN_1],static_bytes,8);
+	}
+
+	// Fill colorspecs
+	uint8_t *ptr = &msg[QUERY_0xD8_START_OF_PROGRAMM];
+	unsigned int i=0;
+	do {
+		*ptr++ = colorspec[i].delay;
+		*ptr++ = colorspec[i].hue;
+		*ptr++ = colorspec[i].saturation;
+		*ptr++ = colorspec[i].brightness;
+		i++;
+	} while (i < number_of_specs);
+
+	/* Calculate the checksum:
+	 * Checksum is: start with 0xff and substract every byte over all color-specs,
+	 * except the first byte (which is static 0x3c) */
+	unsigned int checksum = 0xff;
+	uint8_t *ptr2 = (uint8_t*) colorspec + 1 ;
+	size_t size = number_of_specs * STEP_0xd8_SIZE;
+	for (i=1; i < size; i++) {
+		checksum -= *ptr2++;
+	}
+	*ptr++ = checksum & 0xff;
+
+	int n = ctx->socket_write_fn(ctx,msg, telegram_size);
+	if ( n < 0 ) {
+		info(ctx,"socket_write_fn error %d\n", n);
+		return n;
+	}
+	if ( n != (int) telegram_size) {
+		info(ctx,"short write %d!=%d\n", telegram_size, n);
+		return -EIO;
+	}
+
+	/* read the header */
+	n = ctx->socket_read_fn(ctx, msg, ANSWER_0xD8_SIZE);
+	if (n < 0) {
+		info(ctx,"socket_read_fn error %d\n", n);
+		return n;
+	}
+	if (n != ANSWER_0xD8_SIZE) {
+		info(ctx,"short read %d!=%d\n", ANSWER_0xD8_SIZE, n);
+		return -EIO;
+	}
+
+	n = check_header_response(msg, token, 0xD8);
+	if ( n < 0 ) {
+		info(ctx,"Invalid response (header)\n");
+		return n;
+	}
+
+	/* check if the node address was echoed properly */
+	uint64_t adr2 = uint64_from_msg(&msg[ANSWER_0xD8_NODEADR64_B0]);
+	if (adr != adr2) {
+		info(ctx, "unexpected node mac / group adr %llx!=%llx", adr, adr2 );
+		return -EPROTO;
+	}
+
+	n = -decode_status(msg[ANSWER_0xD8_STATE]);
+	dbg(ctx, "unknown-byte: %x\n", msg[ANSWER_0xD8_UNKNOWN1]);
+	return n;
 }
