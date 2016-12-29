@@ -69,7 +69,7 @@ static struct option long_options[] = {
 { "list-groups", no_argument, 0, 2},
 { "group", required_argument, 0, 'g' },
 { "update", no_argument, 0, 'u' },
-{ "colorloop", no_argument, 'z' },
+{ "colorloop", no_argument, 0, 'z' },
 { 0, 0, 0, 0 }
 };
 /* getopt_long stores the option index here. */
