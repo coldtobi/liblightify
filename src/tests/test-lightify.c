@@ -240,7 +240,7 @@ void teardown(void) {
 
 // short helper to setup our answer and free stuff if necessary.
 static void helper_mfs_setup_answer(struct fake_socket *mfs,
-		const char *our_answer, size_t answer_len) {
+		const unsigned char *our_answer, size_t answer_len) {
 	if (mfs->buf_read)
 		free(mfs->buf_read);
 	mfs->buf_read = malloc(answer_len);
