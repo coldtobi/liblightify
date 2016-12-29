@@ -377,9 +377,9 @@ void dump_nodes_state(struct lightify_ctx *ctx) {
 	int count=0;
 	// Let's create a short table...
 	//      1234567890123456  1234567812345678
-	printf("|------------------|------------------|---------|--------|---------|-----|-----|------|-----|-----|-----|-----|---|\n");
-	printf("| Name             | MAC              | type    | group  | online  | 0/1 | dim | CCT  | Red | Grn | Blu | Wht | s |\n");
-	printf("|------------------|------------------|---------|--------|---------|-----|-----|------|-----|-----|-----|-----|---|\n");
+	printf("|------------------|------------------|---------|--------|---------|-----|-----|------|-----|-----|-----|-----|---|------|\n");
+	printf("| Name             | MAC              | type    | group  | online  | 0/1 | dim | CCT  | Red | Grn | Blu | Wht | s | ZAdr |\n");
+	printf("|------------------|------------------|---------|--------|---------|-----|-----|------|-----|-----|-----|-----|---|------|\n");
 	struct lightify_node *node = NULL;
 
 	while (( node  = lightify_node_get_next(ctx, node))) {
@@ -396,13 +396,14 @@ void dump_nodes_state(struct lightify_ctx *ctx) {
 		printf(" %-3d |", lightify_node_get_green(node));
 		printf(" %-3d |", lightify_node_get_blue(node));
 		printf(" %-3d |", lightify_node_get_white(node));
-		printf(" %c |\n", lightify_node_is_stale(node) ? '*' :' ');
+		printf(" %c |", lightify_node_is_stale(node) ? '*' :' ');
+		printf(" %-4x |\n", lightify_node_get_zoneadr(node));
 	}
 
 	if (!count) {
 		printf("no nodes found\n");
 	}
-	printf("|------------------|------------------|---------|--------|---------|-----|-----|------|-----|-----|-----|-----|---|\n");
+	printf("|------------------|------------------|---------|--------|---------|-----|-----|------|-----|-----|-----|-----|---|------|\n");
 }
 
 void dump_groups(struct lightify_ctx *ctx) {
