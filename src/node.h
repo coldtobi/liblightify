@@ -188,8 +188,8 @@ int lightify_node_set_brightness(struct lightify_node* node, int brightness);
 
 /** Set the ON/OFF status of the node
  *
- * @param node 0 means off, 1 means on (negative numbers are for "unknown")
- * @param on
+ * @param node
+ * @param on 	0 means off, 1 means on (negative numbers are for "unknown")
  * @return negative on error
  */
 int lightify_node_set_onoff(struct lightify_node* node, uint8_t on);
