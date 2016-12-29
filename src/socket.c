@@ -59,9 +59,13 @@ int write_to_socket(struct lightify_ctx *ctx, unsigned char *msg, size_t size) {
 		if (n < 0) {
 			if (EINTR == errno ) continue;
 			if (errno != EWOULDBLOCK && errno != EAGAIN) return -errno;
+		} else if( 0 == n) {
+			break;
+		} else if (n > 0) {
+			m -= n;
+			msg += n;
 		}
-		m -= n;
-		msg += n;
+
 		if (m) {
 			/* check if O_NONBLOCK is set; in this case we retry */
 			n = fcntl(fd, F_GETFL, 0);
@@ -133,15 +137,15 @@ int read_from_socket(struct lightify_ctx *ctx, unsigned char *msg, size_t size )
 
 	do {
 		n = read(fd, msg, m);
-		if (n == -1) {
+		if (-1 == n) {
 			if(errno == EINTR) continue;
 			if(errno != EWOULDBLOCK && errno != EAGAIN) return -errno;
+		} else if (n == 0) {
+			break;
+		} else {
+			m -= n;
+			msg += n;
 		}
-		// EOF
-		if (n == 0) return size-m;
-
-		m -= n;
-		msg += n;
 
 		if (m) {
 			/* check if O_NONBLOCK is set; in this case we retry */
