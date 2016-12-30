@@ -38,6 +38,8 @@ global:
 	lightify_node_request_rgbw;
 	lightify_node_request_brightness;
 	lightify_node_request_update;
+	lightify_node_request_color_loop;
+	lightify_node_request_cct_loop;
 	lightify_group_get_next;
 	lightify_group_get_previous;
 	lightify_group_get_name;
@@ -48,7 +50,6 @@ global:
 	lightify_group_request_cct;
 	lightify_group_request_rgbw;
 	lightify_group_request_brightness;
-	lightify_node_request_color_loop;
 local:
 	*;
 };
