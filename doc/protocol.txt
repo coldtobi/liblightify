@@ -176,6 +176,32 @@ accept lower entries, the checksum does not correlate at all anymore
 
 (Answer seems to be standard as 0x31 and 0x32)
 
+###########################
+0xD9 -- cct loop          #
+###########################
+
+Query:
+[mac] 	  8b  (lamp to manipulate)
+[static]  8b  (seems hardcoded, but has a meaning (on TODO)
+[loop-1]  4b  start point of loop: fixed 0x3c, hue, cct, brightness
+[loop-2]  4b  next loop point.. hue, cct, brightness
+(...)
+[loop-15] 4b  last loop point.. hue, cct, brightness
+[chksum]  1b  checksum, see below.
+
+A color loop step are 4 bytes. Range seems generally 00..ff
+[delay]   1b  time -- faster is lower. 0 seems deactivate (tbc)
+[cct]     2b  color temperature -- high=warm, low=cold)
+[bright]  1b  brightness (units tbc)
+
+Checksum is calculated:
+- start value 0xff
+- subtract all bytes from loop-1 to loop-15, except the first byte (0x3c).
+- NOTE: (probably a fw bug): The checksum is *not* considerung the hi-byte of the CCT.
+
+(Answer seems to be standard as 0x31 and 0x32)
+
+--------------------------------------------------------------------------------
 Some Wireshark logs (e.g running the python-lib's testcase script)
 
 >00000000  07 00 02 13 00 00 07 02  01                      ........ .
@@ -286,4 +312,4 @@ added Licht 01 to Group Desk (allows python script to complete)
 0000007A  11 00 02 31 00 00 07 0a  01 00 00 00 00 00 00 00 ...1.... ........
 0000008A  01 0a 00                                         ...
     000000DA  12 00 03 31 00 00 07 0a  00 01 00 01 00 00 00 00 ...1.... ........
-    000000EA  00 00 00 00                                      ....
+    000000EA  00 00 00 00

@@ -37,6 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <errno.h>
 #include <fcntl.h>
+#include <math.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -1421,6 +1422,41 @@ LIGHTIFY_EXPORT int lightify_node_request_color_loop(struct lightify_ctx *ctx,
 }
 
 
+
+/** Helper function for cctloop to calculate the value required
+ * out of a CCT parameter.
+ *
+ * (Determined by experiments, it seems that there are 3 sections)
+ *
+ * Data from the experiments:
+ *
+ * | CCT   | value |
+ * |-------|-------|
+ * | 6500  | 150   |
+ * | 6000  | 163   |
+ * | 5000  | 200   |
+ * | 4500  | 220   |
+ * | 3400  | 290   |
+ * | 3000  | 325   |
+ * | 2500  | 390   |
+ *
+ * @param cct
+ * @return
+ */
+static uint16_t cct_to_cctloop(uint16_t cct) {
+
+	float tmp;
+	if (cct <= 3000 ) {
+		tmp = 743.3 - 0.14 * (float) cct;
+	} else if ( cct <= 4500) {
+		tmp = 527.7 - 0.0686464 * (float) cct;
+	} else {
+		tmp = 377.95 - 0.0354 * (float) cct;
+	}
+
+	return floorf(tmp + 0.5);
+}
+
 // note: experimental API -- do not use yet.
 // WARNING: INSTABLE API.
 LIGHTIFY_EXPORT int lightify_node_request_cct_loop(struct lightify_ctx *ctx,
@@ -1429,9 +1465,6 @@ LIGHTIFY_EXPORT int lightify_node_request_cct_loop(struct lightify_ctx *ctx,
 {
 	if (!ctx || !node || !cctspec || 15 != number_of_specs) return -EINVAL;
 
-	// not finsihed API -- completly untested!
-	return -EIO;
-
 	/* cctspec[0].delay must be 0x3C */
 	if (cctspec[0].delay != 0x3C) return -EINVAL;
 
@@ -1439,7 +1472,7 @@ LIGHTIFY_EXPORT int lightify_node_request_cct_loop(struct lightify_ctx *ctx,
 	unsigned char msg[telegram_size +1];
 
 	uint32_t token = ++ctx->cnt;
-	fill_telegram_header(msg, telegram_size, token, 0, 0xd8);
+	fill_telegram_header(msg, telegram_size, token, 0, 0xd9);
 
 	uint64_t adr = lightify_node_get_nodeadr(node);
 	msg_from_uint64(&msg[QUERY_0xD9_NODEADR64_B0], adr);
@@ -1455,26 +1488,30 @@ LIGHTIFY_EXPORT int lightify_node_request_cct_loop(struct lightify_ctx *ctx,
 	}
 
 	// Fill colorspecs
-	uint8_t *ptr = &msg[QUERY_0xD8_START_OF_PROGRAMM];
+	uint8_t *ptr = &msg[QUERY_0xD9_START_OF_PROGRAMM];
 	unsigned int i=0;
+	unsigned int chksum = 0xff;
 	do {
-		*ptr++ = cctspec[i].delay;
-		*ptr++ = (cctspec[i].cct / 10) >> 8 ;
-		*ptr++ = (cctspec[i].cct / 10) & 0xFF;
-		*ptr++ = cctspec[i].brightness;
+		*ptr++ = cctspec[i].delay; if (i) chksum -= cctspec[i].delay;
+		uint16_t cct = cct_to_cctloop(cctspec[i].cct);
+		chksum -= cct;
+		*ptr++ = cct >> 8 ;
+		*ptr++ = cct & 0xFF;
+		chksum -= *ptr++ = cctspec[i].brightness;
 		i++;
 	} while (i < number_of_specs);
 
 	/* Calculate the checksum:
 	 * Checksum is: start with 0xff and substract every byte over all color-specs,
 	 * except the first byte (which is static 0x3c) */
-	unsigned int checksum = 0xff;
-	uint8_t *ptr2 = (uint8_t*) cctspec + 1 ;
+	uint8_t checksum = 0xff;
+	uint8_t *ptr2 = (uint8_t*) &msg[QUERY_0xD9_START_OF_PROGRAMM];
 	size_t size = number_of_specs * STEP_0xD9_SIZE;
 	for (i=1; i < size; i++) {
-		checksum -= *ptr2++;
+			checksum -= ptr2[i];
 	}
-	*ptr++ = checksum & 0xff;
+
+	*ptr++ = chksum;
 
 	int n = ctx->socket_write_fn(ctx,msg, telegram_size);
 	if ( n < 0 ) {
@@ -1492,7 +1529,7 @@ LIGHTIFY_EXPORT int lightify_node_request_cct_loop(struct lightify_ctx *ctx,
 		info(ctx,"socket_read_fn error %d\n", n);
 		return n;
 	}
-	if (n != ANSWER_0xD8_SIZE) {
+	if (n != ANSWER_0xD9_SIZE) {
 		info(ctx,"short read %d!=%d\n", ANSWER_0xD9_SIZE, n);
 		return -EIO;
 	}

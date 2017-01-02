@@ -855,7 +855,6 @@ int lightify_node_request_color_loop(struct lightify_ctx *ctx,
  *  \note "success" is only the report from the gateway. That does not mean it will
  *  really start looping -- sorry, no API known to query that.
  *
- *  \warning this API is completely untested. It will just compile...
  */
 
 int lightify_node_request_cct_loop(struct lightify_ctx *ctx,
