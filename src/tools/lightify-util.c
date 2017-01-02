@@ -70,6 +70,7 @@ static struct option long_options[] = {
 { "group", required_argument, 0, 'g' },
 { "update", no_argument, 0, 'u' },
 { "colorloop", no_argument, 0, 'z' },
+{ "cctloop", no_argument, 0, 'y' },
 { 0, 0, 0, 0 }
 };
 /* getopt_long stores the option index here. */
@@ -244,7 +245,7 @@ void command_update_node(struct lightify_ctx *ctx) {
 	printf("update_node ret=%d\n", ret);
 }
 
-void command_do_loop(struct lightify_ctx *ctx) {
+void command_do_colorloop(struct lightify_ctx *ctx) {
 	struct lightify_node *node = find_node_per_name(ctx,name_data);
 	if (!node) {
 		return;
@@ -275,6 +276,40 @@ void command_do_loop(struct lightify_ctx *ctx) {
 				sizeof(colorspec)/sizeof(struct lightify_color_loop_spec), NULL);
 	return;
 }
+
+void command_do_cctloop(struct lightify_ctx *ctx) {
+	struct lightify_node *node = find_node_per_name(ctx,name_data);
+	if (!node) {
+		return;
+	}
+
+	/* assemble some colorspec for testing.*/
+	struct lightify_cct_loop_spec cctspec[] = {
+		{  0x3c , 2000 , 0xff },
+		{  0x05 , 2500 , 0xff },
+		{  0x05 , 2700 , 0xff },
+		{  0x05 , 3000 , 0xff },
+		{  0x05 , 3500 , 0xff },
+		{  0x05 , 4000 , 0xff },
+		{  0x05 , 5000 , 0xff },
+		{  0x05 , 6000 , 0xff },
+		{  0x05 , 5000 , 0xff },
+		{  0x05 , 4000 , 0xff },
+		{  0x05 , 3500 , 0xff },
+		{  0x05 , 3000 , 0xff },
+		{  0x05 , 2700 , 0xff },
+		{  0x05 , 2500 , 0xff },
+		{  0x05 , 2000 , 0xff }
+	};
+
+	unsigned char statics[8] =
+			{ 0x01, 0xff, 0x00, 0xff, 0x80, 0x3c, 0x00, 0x00 };
+	lightify_node_request_cct_loop(ctx, node, cctspec,
+			sizeof(cctspec) / sizeof(struct lightify_cct_loop_spec), NULL);
+
+	return;
+}
+
 
 
 void setup_connection(struct lightify_ctx *ctx) {
@@ -377,9 +412,9 @@ void dump_nodes_state(struct lightify_ctx *ctx) {
 	int count=0;
 	// Let's create a short table...
 	//      1234567890123456  1234567812345678
-	printf("|------------------|------------------|---------|--------|---------|-----|-----|------|-----|-----|-----|-----|---|\n");
-	printf("| Name             | MAC              | type    | group  | online  | 0/1 | dim | CCT  | Red | Grn | Blu | Wht | s |\n");
-	printf("|------------------|------------------|---------|--------|---------|-----|-----|------|-----|-----|-----|-----|---|\n");
+	printf("|------------------|------------------|---------|--------|---------|-----|-----|------|-----|-----|-----|-----|---|------|\n");
+	printf("| Name             | MAC              | type    | group  | online  | 0/1 | dim | CCT  | Red | Grn | Blu | Wht | s | ZAdr |\n");
+	printf("|------------------|------------------|---------|--------|---------|-----|-----|------|-----|-----|-----|-----|---|------|\n");
 	struct lightify_node *node = NULL;
 
 	while (( node  = lightify_node_get_next(ctx, node))) {
@@ -396,13 +431,14 @@ void dump_nodes_state(struct lightify_ctx *ctx) {
 		printf(" %-3d |", lightify_node_get_green(node));
 		printf(" %-3d |", lightify_node_get_blue(node));
 		printf(" %-3d |", lightify_node_get_white(node));
-		printf(" %c |\n", lightify_node_is_stale(node) ? '*' :' ');
+		printf(" %c |", lightify_node_is_stale(node) ? '*' :' ');
+		printf(" %-4x |\n", lightify_node_get_zoneadr(node));
 	}
 
 	if (!count) {
 		printf("no nodes found\n");
 	}
-	printf("|------------------|------------------|---------|--------|---------|-----|-----|------|-----|-----|-----|-----|---|\n");
+	printf("|------------------|------------------|---------|--------|---------|-----|-----|------|-----|-----|-----|-----|---|------|\n");
 }
 
 void dump_groups(struct lightify_ctx *ctx) {
@@ -442,7 +478,7 @@ int main(int argc, char *argv[]) {
 
 
 	while (1) {
-		c = getopt_long(argc, argv, "dc:r:l:n:h:p:01t:w:g:u:z", long_options,
+		c = getopt_long(argc, argv, "dc:r:l:n:h:p:01t:w:g:u:z:y", long_options,
 				&option_index);
 		if (c == -1)
 			break;
@@ -555,7 +591,13 @@ int main(int argc, char *argv[]) {
 
 		case 'z': {
 			if (!gonnected || !name_data) { usage(argv); exit(1); }
-			command_do_loop(ctx);
+			command_do_colorloop(ctx);
+			break;
+		}
+
+		case 'y': {
+			if (!gonnected || !name_data) { usage(argv); exit(1); }
+			command_do_cctloop(ctx);
 			break;
 		}
 

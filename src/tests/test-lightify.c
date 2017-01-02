@@ -240,7 +240,7 @@ void teardown(void) {
 
 // short helper to setup our answer and free stuff if necessary.
 static void helper_mfs_setup_answer(struct fake_socket *mfs,
-		const char *our_answer, size_t answer_len) {
+		const unsigned char *our_answer, size_t answer_len) {
 	if (mfs->buf_read)
 		free(mfs->buf_read);
 	mfs->buf_read = malloc(answer_len);
@@ -485,7 +485,7 @@ START_TEST(lightify_tst_scan_nodes)
 		ck_assert_int_eq(color, 0xf3);
 
 		// Check if firwmare version has been correctly stored.
-		unsigned long version = lightify_node_get_fwversion(node);
+		uint32_t version = lightify_node_get_fwversion(node);
 		ck_assert(version == 0x01020307);
 
 		// Check we delete node information when scanfornodes fails.

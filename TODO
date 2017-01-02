@@ -2,8 +2,8 @@ TODO List (patches welcome)
 
  * Improve documentation (Doxygen style docs)
  * Manpage for the utility
- * Group Control
  * Sniffing managment functions (rename, groups ..)
- * C++ Wrapper
  * Pythong Bindings
- * PHP Bindings...
+ * Commdands 0xd8 / 0xd9 static bytes dissecting
+ * lightify-utils: implement cctloop and colorloop
+ * enhance testsuite: groups and the loop commands.
